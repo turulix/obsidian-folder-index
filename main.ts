@@ -14,12 +14,14 @@ export interface PluginSetting {
 	graphOverwrite: boolean;
 	skipFirstHeadline: boolean;
 	disableHeadlines: boolean;
+	rootIndexFile: string
 }
 
 const DEFAULT_SETTINGS: PluginSetting = {
 	skipFirstHeadline: true,
 	disableHeadlines: false,
-	graphOverwrite: true
+	graphOverwrite: true,
+	rootIndexFile: "Dashboard.md"
 }
 
 export default class FolderTableContent extends Plugin {
@@ -48,7 +50,7 @@ export default class FolderTableContent extends Plugin {
 			id: "execute-test-command",
 			name: "Test Command",
 			callback: () => {
-				this.graphManipulator.overwriteAllGraph({})
+				this.graphManipulator.setAllGraphs({})
 			}
 		})
 	}
@@ -60,11 +62,11 @@ export default class FolderTableContent extends Plugin {
 	onGraphWindowUpdate(manipulator: GraphManipulator, leaves: WorkspaceLeaf[]) {
 		leaves.forEach(value => {
 			let engine = manipulator.getEngine(value)
+			console.log(engine);
 			if (engine.oldRender == null) {
 				engine.oldRender = engine.render
 				engine.render = () => {
 					if (this.settings.graphOverwrite) {
-						console.log("New Render Method")
 						manipulator.render()
 					} else {
 						// Idk why, but you have to call this twice for it to work?!?!
@@ -72,8 +74,11 @@ export default class FolderTableContent extends Plugin {
 						engine.oldRender()
 					}
 				}
+				engine.render()
+			} else {
+				console.log("Not my update");
 			}
-			engine.render()
+
 		})
 	}
 
@@ -107,6 +112,16 @@ class SampleSettingTab extends PluginSettingTab {
 			.addToggle(component => component.setValue(this.plugin.settings.graphOverwrite)
 				.onChange(async (value) => {
 					this.plugin.settings.graphOverwrite = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Root Index File")
+			.setDesc("This will overwrite the default graph view and fixing linked files not actually being linked")
+			.addText(component => component.setValue(this.plugin.settings.rootIndexFile)
+				.setPlaceholder("dashboard.md")
+				.onChange(async (value) => {
+					this.plugin.settings.rootIndexFile = value
 					await this.plugin.saveSettings()
 				}))
 
