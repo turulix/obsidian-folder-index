@@ -38,49 +38,13 @@ export default class FolderTableContent extends Plugin {
 		})
 		this.graphManipulator = new GraphManipulator(this.app, this, this.settings)
 		this.graphManipulator.load()
-
-
-		// @ts-ignore
-		this.app.metadataCache.on("ftc:graphLeaveUpdate", (manipulator: GraphManipulator, leaves: WorkspaceLeaf[]) => {
-			this.onGraphWindowUpdate(manipulator, leaves)
-		})
-
-
-		this.addCommand({
-			id: "execute-test-command",
-			name: "Test Command",
-			callback: () => {
-				this.graphManipulator.setAllGraphs({})
-			}
-		})
 	}
 
 	async onunload() {
 
 	}
 
-	onGraphWindowUpdate(manipulator: GraphManipulator, leaves: WorkspaceLeaf[]) {
-		leaves.forEach(value => {
-			let engine = manipulator.getEngine(value)
-			console.log(engine);
-			if (engine.oldRender == null) {
-				engine.oldRender = engine.render
-				engine.render = () => {
-					if (this.settings.graphOverwrite) {
-						manipulator.render()
-					} else {
-						// Idk why, but you have to call this twice for it to work?!?!
-						engine.oldRender()
-						engine.oldRender()
-					}
-				}
-				engine.render()
-			} else {
-				console.log("Not my update");
-			}
 
-		})
-	}
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
