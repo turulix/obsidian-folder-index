@@ -24,8 +24,8 @@ export class GraphManipulator {
 	}
 
 	load() {
-		this.app.workspace.onLayoutReady(this.refreshGraphLeaves.bind(this))
-		this.plugin.registerEvent(this.app.workspace.on("layout-change", this.refreshGraphLeaves.bind(this)))
+		this.app.workspace.onLayoutReady(this.onLayoutChange.bind(this))
+		this.plugin.registerEvent(this.app.workspace.on("layout-change", this.onLayoutChange.bind(this)))
 
 		// @ts-ignore
 		this.app.metadataCache.on("ftc:graphLeaveUpdate", (manipulator: GraphManipulator, leaves: WorkspaceLeaf[]) => {
@@ -47,7 +47,7 @@ export class GraphManipulator {
 			})
 		})
 
-		this.refreshGraphLeaves()
+		this.onLayoutChange()
 		// @ts-ignore
 		this.plugin.registerEvent(
 			this.app.metadataCache.on(
@@ -56,7 +56,7 @@ export class GraphManipulator {
 				(settings: PluginSetting) => {
 					console.log("Settings update")
 					this.config = settings
-					this.redrawGraphs()
+					this.redrawAllGraphs()
 				}
 			)
 		);
@@ -158,13 +158,7 @@ export class GraphManipulator {
 
 	}
 
-	setAllGraphs(graphToRender: {}) {
-		this.graphsLeafs.forEach(value => {
-			this.getEngine(value).renderer.setData(graphToRender)
-		})
-	}
-
-	redrawGraphs() {
+	redrawAllGraphs() {
 		this.clearAllGraphs()
 		this.graphsLeafs.forEach(value => this.getEngine(value).render())
 	}
@@ -175,7 +169,7 @@ export class GraphManipulator {
 		}))
 	}
 
-	refreshGraphLeaves() {
+	onLayoutChange() {
 		console.log("GraphLeaves Update")
 		this.graphsLeafs = this.app.workspace.getLeavesOfType("graph")
 		app.metadataCache.trigger("ftc:graphLeaveUpdate", this, this.graphsLeafs)
