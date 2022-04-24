@@ -1,12 +1,13 @@
 import {
-	App,
+	App, fuzzySearch, Notice,
 	Plugin,
-	PluginSettingTab,
+	PluginSettingTab, prepareQuery,
 	Setting, TFile, TFolder, WorkspaceLeaf
 } from 'obsidian';
-import {CodeBlockRenderer} from "./renderers/CodeBlockRenderer";
+import {ContentRenderer} from "./modules/ContentRenderer";
 import {DataEngine} from "./types/DataEngine";
-import {GraphManipulator} from "./renderers/GraphManipulator";
+import {GraphManipulator} from "./modules/GraphManipulator";
+import {EventEmitter} from "events";
 
 // Remember to rename these classes and interfaces!
 
@@ -24,42 +25,71 @@ const DEFAULT_SETTINGS: PluginSetting = {
 	rootIndexFile: "Dashboard.md"
 }
 
-export default class FolderTableContent extends Plugin {
+export default class FolderIndex extends Plugin{
 	settings: PluginSetting;
 	graphManipulator: GraphManipulator;
+	eventManager: EventEmitter
 
 	async onload() {
 		console.log("Loading FolderTableContent")
+		this.eventManager = new EventEmitter()
+
 		await this.loadSettings();
+
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
+		this.app.workspace.onLayoutReady(this.onLayoutReady.bind(this))
+		this.registerEvent(this.app.workspace.on("layout-change", this.onLayoutChange.bind(this)))
+
 		this.registerMarkdownCodeBlockProcessor("ftc", (source, el, ctx) => {
-			ctx.addChild(new CodeBlockRenderer(this.app, ctx.sourcePath, el, this.settings))
+			ctx.addChild(new ContentRenderer(this.app, this, ctx.sourcePath, el))
 		})
-		this.graphManipulator = new GraphManipulator(this.app, this, this.settings)
+		this.graphManipulator = new GraphManipulator(this.app, this)
 		this.graphManipulator.load()
+
+		this.addCommand({
+			id: "TestCommand",
+			name: "Test Command",
+			callback: () => {
+				let q = prepareQuery("file:Dashboard.md")
+				console.log(fuzzySearch(q, "Dashboard.md"));
+			}
+		})
+	}
+
+	onLayoutChange(){
+		this.eventManager.emit("onLayoutChange")
+	}
+	onLayoutReady(){
+		this.eventManager.emit("onLayoutReady")
 	}
 
 	async onunload() {
-
+		console.log("Unloading FolderTableContent")
+		this.eventManager.removeAllListeners()
+		this.graphManipulator.unload()
 	}
-
-
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
 	async saveSettings() {
+		console.log("Save Settings");
 		await this.saveData(this.settings);
-		this.app.metadataCache.trigger("ftc:settings", this.settings);
+		this.eventManager.emit("settingsUpdate", this.settings);
+	}
+
+	sendNotice(message: string): void {
+		new Notice(message)
+		console.log(message)
 	}
 }
 
 class SampleSettingTab extends PluginSettingTab {
-	plugin: FolderTableContent;
+	plugin: FolderIndex;
 
-	constructor(app: App, plugin: FolderTableContent) {
+	constructor(app: App, plugin: FolderIndex) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

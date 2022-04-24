@@ -1,6 +1,6 @@
 import {DataEngine} from "../types/DataEngine";
-import {App, Notice, TFile, TFolder, WorkspaceLeaf} from "obsidian";
-import FolderTableContent, {PluginSetting} from "../main";
+import {App, Notice, prepareQuery, TFile, TFolder, WorkspaceLeaf, FuzzyMatch} from "obsidian";
+import FolderIndex, {PluginSetting} from "../main";
 
 type NodeType = "" | "focused" | "tag" | "unresolved" | "attachment"
 
@@ -19,57 +19,83 @@ type Graph = {
 
 export class GraphManipulator {
 	private graphsLeafs: WorkspaceLeaf[]
+	private oldGraphOverwrite: boolean
 
-	constructor(private app: App, private plugin: FolderTableContent, private config: PluginSetting) {
+	constructor(private app: App, private plugin: FolderIndex) {
+	}
+
+	private onLayoutChange() {
+		this.graphsLeafs = this.app.workspace.getLeavesOfType("graph")
+		this.plugin.eventManager.emit("graphLeafUpdate", this.graphsLeafs)
+	}
+
+	private onLeafUpdate(leaves: WorkspaceLeaf[]) {
+		leaves.forEach(value => {
+			let engine = this.getEngine(value)
+			if (engine.oldRender == null) {
+				engine.oldRender = engine.render
+				engine.render = () => {
+					if (this.plugin.settings.graphOverwrite) {
+						this.render(engine)
+					} else {
+						engine.oldRender()
+					}
+				}
+				if (this.plugin.settings.graphOverwrite) {
+					this.clearGraph(engine)
+					this.render(engine)
+				}
+			}
+		})
+	}
+
+	private onSettingsUpdate() {
+		if (this.oldGraphOverwrite != this.plugin.settings.graphOverwrite) {
+			this.redrawAllGraphs()
+			this.oldGraphOverwrite = this.plugin.settings.graphOverwrite
+		}
 	}
 
 	load() {
-		this.app.workspace.onLayoutReady(this.onLayoutChange.bind(this))
-		this.plugin.registerEvent(this.app.workspace.on("layout-change", this.onLayoutChange.bind(this)))
+		this.oldGraphOverwrite = this.plugin.settings.graphOverwrite;
 
-		// @ts-ignore
-		this.app.metadataCache.on("ftc:graphLeaveUpdate", (manipulator: GraphManipulator, leaves: WorkspaceLeaf[]) => {
-			leaves.forEach(value => {
-				let engine = manipulator.getEngine(value)
-				if (engine.oldRender == null) {
-					engine.oldRender = engine.render
-					if (this.config.graphOverwrite) {
-						GraphManipulator.clearGraph(engine)
-					}
-					engine.render = () => {
-						if (this.config.graphOverwrite) {
-							manipulator.render(engine)
-						} else {
-							engine.oldRender()
-						}
-					}
-				}
-			})
-		})
+		this.plugin.eventManager.on("onLayoutChange", this.onLayoutChange.bind(this))
+		this.plugin.eventManager.on("graphLeafUpdate", this.onLeafUpdate.bind(this))
+		this.plugin.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this))
 
 		this.onLayoutChange()
-		// @ts-ignore
-		this.plugin.registerEvent(
-			this.app.metadataCache.on(
-				//@ts-ignore
-				"ftc:settings",
-				(settings: PluginSetting) => {
-					console.log("Settings update")
-					this.config = settings
-					this.redrawAllGraphs()
-				}
-			)
-		);
+
+		if (this.plugin.settings.graphOverwrite) {
+			this.clearAllGraphs()
+			this.redrawAllGraphs()
+		}
+	}
+
+	unload() {
+		this.graphsLeafs.forEach(value => {
+			let engine = this.getEngine(value)
+			if (engine.oldRender != null) {
+				engine.render = engine.oldRender
+				delete engine.oldRender
+				this.clearGraph(engine)
+				engine.render()
+			}
+		})
 	}
 
 	render(engine: DataEngine) {
 		let renderSettings = engine.getOptions()
 		let graph: Graph = {}
-		this.app.vault.getFiles().forEach(file => {
+		debugger;
+
+		this.app.vault.getFiles().forEach(async file => {
+			if(Object.keys(engine.fileFilter).length > 0 &&!engine.fileFilter[file.path] ){
+				return;
+			}
 			let edges: GraphLink = {}
 			let cache = this.app.metadataCache.getFileCache(file)
 
-			if (file.parent.name + ".md" == file.name || file.name == this.config.rootIndexFile) {
+			if (file.parent.name + ".md" == file.name || file.name == this.plugin.settings.rootIndexFile) {
 				file.parent.children.forEach(otherFile => {
 					if (otherFile instanceof TFile && file.path != otherFile.path) {
 						// Other File will add itself
@@ -151,13 +177,13 @@ export class GraphManipulator {
 		if (!renderSettings.showOrphans) {
 			let allLinks: string[] = []
 			for (let graphKey in graph) {
-				if(Object.keys(graph[graphKey]["links"]).length > 0){
+				if (Object.keys(graph[graphKey]["links"]).length > 0) {
 					allLinks.push(graphKey)
 				}
 				allLinks = allLinks.concat(Object.keys(graph[graphKey]["links"]))
 			}
 			for (let graphKey in graph) {
-				if(!allLinks.includes(graphKey)){
+				if (!allLinks.includes(graphKey)) {
 					delete graph[graphKey]
 				}
 			}
@@ -180,20 +206,13 @@ export class GraphManipulator {
 		}))
 	}
 
-	onLayoutChange() {
-		console.log("GraphLeaves Update")
-		this.graphsLeafs = this.app.workspace.getLeavesOfType("graph")
-		app.metadataCache.trigger("ftc:graphLeaveUpdate", this, this.graphsLeafs)
-	}
-
-
 	getEngine(leaf: WorkspaceLeaf): DataEngine {
 		// @ts-ignore
 		return leaf.view.dataEngine as DataEngine
 
 	}
 
-	private static clearGraph(engine: DataEngine) {
+	clearGraph(engine: DataEngine) {
 		engine.renderer.setData({
 			nodes: {}
 		})

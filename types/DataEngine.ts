@@ -22,7 +22,21 @@ export interface DataEngine {
 	setQuery: Function
 	updateSearch: Function
 	onOptionsChange: Function
-
+	colorGroupOptions: {}
+	controlsEl: Element
+	currentFocusFile: string
+	displayOptions: {}
+	fileFilter: {[id: string]: boolean}
+	filterOptions: {}
+	forceOptions: {}
+	hasFilter: boolean
+	hoverPopover: any
+	lastHoverLink: string
+	progression: number
+	progressionSpeed: number
+	queue: any
+	requestUpdateSearch: Function
+	searchQueries: any
 }
 
 export interface Renderer{

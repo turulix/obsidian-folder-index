@@ -7,30 +7,25 @@ import {
 	TFile,
 	TFolder
 } from "obsidian";
-import {PluginSetting} from "../main";
+import FolderIndex from "../main";
 import {FileHeader} from "../models/FileHeader";
 
-export class CodeBlockRenderer extends MarkdownRenderChild {
-	private config: PluginSetting;
-
-	constructor(private app: App, private filePath: string, private container: HTMLElement, config: PluginSetting) {
+export class ContentRenderer extends MarkdownRenderChild {
+	constructor(private app: App, private plugin: FolderIndex, private filePath: string, private container: HTMLElement) {
 		super(container)
-		this.config = config;
+	}
+
+	async onload() {
+		this.plugin.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this))
 	}
 
 
-	async onload() {
-		await this.render()
-		this.registerEvent(
-			this.app.metadataCache.on(
-				//@ts-ignore
-				"ftc:settings",
-				(settings: PluginSetting) => {
-					this.config = settings
-					this.render()
-				}
-			)
-		);
+	async onunload() {
+		this.plugin.eventManager.off("settingsUpdate", this.onSettingsUpdate.bind(this))
+	}
+
+	public onSettingsUpdate(){
+		this.render().then()
 	}
 
 	private async render() {
@@ -51,8 +46,8 @@ export class CodeBlockRenderer extends MarkdownRenderChild {
 				let headings = app.metadataCache.getFileCache(value).headings
 				let fileLink = app.metadataCache.fileToLinktext(value, this.filePath)
 				list.push(`1. [[${fileLink}]]`)
-				if (headings != null && !this.config.disableHeadlines) {
-					for (let i = this.config.skipFirstHeadline ? 1 : 0; i < headings.length; i++) {
+				if (headings != null && !this.plugin.settings.disableHeadlines) {
+					for (let i = this.plugin.settings.skipFirstHeadline ? 1 : 0; i < headings.length; i++) {
 						let heading = new FileHeader(headings[i])
 						let numIndents = new Array(Math.max(1, heading.level - headings[0].level));
 
