@@ -149,7 +149,18 @@ export class GraphManipulator {
 		})
 
 		if (!renderSettings.showOrphans) {
-			//TODO: Find and kill Orphans
+			let allLinks: string[] = []
+			for (let graphKey in graph) {
+				if(Object.keys(graph[graphKey]["links"]).length > 0){
+					allLinks.push(graphKey)
+				}
+				allLinks = allLinks.concat(Object.keys(graph[graphKey]["links"]))
+			}
+			for (let graphKey in graph) {
+				if(!allLinks.includes(graphKey)){
+					delete graph[graphKey]
+				}
+			}
 		}
 
 		engine.renderer.setData({
