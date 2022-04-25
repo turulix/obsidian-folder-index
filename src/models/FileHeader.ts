@@ -2,7 +2,8 @@ import {HeadingCache} from "obsidian";
 
 // TODO refactor this
 export class FileHeader {
-	constructor(private cached: HeadingCache) {}
+	constructor(private cached: HeadingCache) {
+	}
 
 	get level(): number {
 		return this.cached.level;
@@ -11,15 +12,18 @@ export class FileHeader {
 	get rawHeading(): string {
 		return this.cached.heading;
 	}
+
 	get isLink(): boolean {
 		return /\[\[(.*?)\]\]/.test(this.cached.heading);
 	}
+
 	get href(): string | null {
 		if (!this.isLink) return null;
 		const value = this.parseMarkdownLink(this.rawHeading);
 		const parts = value.split("|");
 		return `#${parts.join(" ")}`;
 	}
+
 	get markdownHref(): string | null {
 		if (!this.isLink) return `[[#${this.rawHeading}]]`;
 		const value = this.parseMarkdownLink(this.rawHeading);

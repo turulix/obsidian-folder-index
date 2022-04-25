@@ -36,8 +36,12 @@ export class GraphManipulator {
 	private onLeafUpdate(leaves: WorkspaceLeaf[]) {
 		leaves.forEach(value => {
 			const engine = this.getEngine(value)
+			// Check if we have a new graph leaf
 			if (engine.oldRender == null) {
+				// Safe the old render method
 				engine.oldRender = engine.render
+
+				// Overwrite with our render method.
 				engine.render = () => {
 					if (this.plugin.settings.graphOverwrite) {
 						this.render(engine)
@@ -45,6 +49,7 @@ export class GraphManipulator {
 						engine.oldRender()
 					}
 				}
+				// We may need to rerender the graph view, so we do this here.
 				if (this.plugin.settings.graphOverwrite) {
 					this.clearGraph(engine)
 					this.render(engine)
@@ -116,6 +121,9 @@ export class GraphManipulator {
 
 			if (cache.links != null) {
 				cache.links.forEach(link => {
+					if(link.link.contains("#")){
+						link.link = link.link.split(/#/)[0]
+					}
 					const linkedFile = this.app.metadataCache.getFirstLinkpathDest(link.link, file.path)
 					if (linkedFile == null) {
 						//The linked file doesn't exist. So it's an unresolved link
@@ -212,9 +220,9 @@ export class GraphManipulator {
 		// Just looping over all the nodes in the graph and adding the color tag when necessary
 		for (const graphKey in graph) {
 			const returnValue = AddColorTag(graphKey, graph[graphKey].type)
-			if(returnValue === true)
+			if (returnValue === true)
 				continue
-			graph[graphKey].color  = returnValue
+			graph[graphKey].color = returnValue
 		}
 
 		engine.renderer.setData({

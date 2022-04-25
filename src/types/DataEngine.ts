@@ -28,7 +28,7 @@ export interface DataEngine {
 	controlsEl: Element
 	currentFocusFile: string
 	displayOptions: {}
-	fileFilter: {[id: string]: boolean}
+	fileFilter: { [id: string]: boolean }
 	filterOptions: {}
 	forceOptions: {}
 	hasFilter: boolean
@@ -41,7 +41,7 @@ export interface DataEngine {
 	searchQueries: any
 }
 
-export interface Renderer{
+export interface Renderer {
 	links: []
 	nodes: []
 	changed: Function

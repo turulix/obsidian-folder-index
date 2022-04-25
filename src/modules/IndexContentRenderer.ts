@@ -2,7 +2,7 @@ import {App, MarkdownRenderChild, MarkdownRenderer, TAbstractFile, TFile, TFolde
 import FolderIndex from "../main";
 import {FileHeader} from "../models/FileHeader";
 
-export class ContentRenderer extends MarkdownRenderChild {
+export class IndexContentRenderer extends MarkdownRenderChild {
 	constructor(private app: App, private plugin: FolderIndex, private filePath: string, private container: HTMLElement) {
 		super(container)
 	}
@@ -16,7 +16,7 @@ export class ContentRenderer extends MarkdownRenderChild {
 		this.plugin.eventManager.off("settingsUpdate", this.onSettingsUpdate.bind(this))
 	}
 
-	public onSettingsUpdate(){
+	public onSettingsUpdate() {
 		this.render().then()
 	}
 
