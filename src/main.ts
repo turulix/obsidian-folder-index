@@ -32,6 +32,7 @@ export default class FolderIndex extends Plugin{
 
 	async onload() {
 		console.log("Loading FolderTableContent")
+		console.log("Test")
 		this.eventManager = new EventEmitter()
 
 		await this.loadSettings();
