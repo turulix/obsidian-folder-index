@@ -1,12 +1,4 @@
-import {
-	App,
-	MarkdownPreviewRenderer,
-	MarkdownRenderChild,
-	MarkdownRenderer,
-	TAbstractFile,
-	TFile,
-	TFolder
-} from "obsidian";
+import {App, MarkdownRenderChild, MarkdownRenderer, TAbstractFile, TFile, TFolder} from "obsidian";
 import FolderIndex from "../main";
 import {FileHeader} from "../models/FileHeader";
 
@@ -30,8 +22,8 @@ export class ContentRenderer extends MarkdownRenderChild {
 
 	private async render() {
 		this.container.empty()
-		let parent: TFolder = app.vault.getAbstractFileByPath(this.filePath).parent
-		let files = parent.children
+		const parent: TFolder = app.vault.getAbstractFileByPath(this.filePath).parent
+		const files = parent.children
 		await MarkdownRenderer.renderMarkdown(this.buildMarkdownText(files), this.container, this.filePath, this)
 	}
 
@@ -43,13 +35,13 @@ export class ContentRenderer extends MarkdownRenderChild {
 				if (value.basename == value.parent.name) {
 					return
 				}
-				let headings = app.metadataCache.getFileCache(value).headings
-				let fileLink = app.metadataCache.fileToLinktext(value, this.filePath)
+				const headings = app.metadataCache.getFileCache(value).headings
+				const fileLink = app.metadataCache.fileToLinktext(value, this.filePath)
 				list.push(`1. [[${fileLink}]]`)
 				if (headings != null && !this.plugin.settings.disableHeadlines) {
 					for (let i = this.plugin.settings.skipFirstHeadline ? 1 : 0; i < headings.length; i++) {
-						let heading = new FileHeader(headings[i])
-						let numIndents = new Array(Math.max(1, heading.level - headings[0].level));
+						const heading = new FileHeader(headings[i])
+						const numIndents = new Array(Math.max(1, heading.level - headings[0].level));
 
 						const indent = numIndents.fill("\t").join("");
 						list.push(`${indent}1. [[${fileLink}#${heading.rawHeading}|${heading.rawHeading}]]`);

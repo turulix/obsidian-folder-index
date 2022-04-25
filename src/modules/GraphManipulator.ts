@@ -35,7 +35,7 @@ export class GraphManipulator {
 
 	private onLeafUpdate(leaves: WorkspaceLeaf[]) {
 		leaves.forEach(value => {
-			let engine = this.getEngine(value)
+			const engine = this.getEngine(value)
 			if (engine.oldRender == null) {
 				engine.oldRender = engine.render
 				engine.render = () => {
@@ -77,7 +77,7 @@ export class GraphManipulator {
 
 	unload() {
 		this.graphsLeafs.forEach(value => {
-			let engine = this.getEngine(value)
+			const engine = this.getEngine(value)
 			if (engine.oldRender != null) {
 				engine.render = engine.oldRender
 				delete engine.oldRender
@@ -88,15 +88,15 @@ export class GraphManipulator {
 	}
 
 	render(engine: DataEngine) {
-		let renderSettings = engine.getOptions()
-		let graph: Graph = {}
+		const renderSettings = engine.getOptions()
+		const graph: Graph = {}
 
 		this.app.vault.getFiles().forEach(async file => {
 			if (Object.keys(engine.fileFilter).length > 0 && !engine.fileFilter[file.path]) {
 				return;
 			}
-			let edges: GraphLink = {}
-			let cache = this.app.metadataCache.getFileCache(file)
+			const edges: GraphLink = {}
+			const cache = this.app.metadataCache.getFileCache(file)
 
 			if (file.parent.name + ".md" == file.name || file.name == this.plugin.settings.rootIndexFile) {
 				file.parent.children.forEach(otherFile => {
@@ -106,7 +106,7 @@ export class GraphManipulator {
 					}
 					if (otherFile instanceof TFolder) {
 						// Look if it has an index File
-						let subIndex = otherFile.children.find(value => value.name == otherFile.name + ".md")
+						const subIndex = otherFile.children.find(value => value.name == otherFile.name + ".md")
 						if (subIndex != null) {
 							edges[subIndex.path] = true
 						}
@@ -116,7 +116,7 @@ export class GraphManipulator {
 
 			if (cache.links != null) {
 				cache.links.forEach(link => {
-					let linkedFile = this.app.metadataCache.getFirstLinkpathDest(link.link, file.path)
+					const linkedFile = this.app.metadataCache.getFirstLinkpathDest(link.link, file.path)
 					if (linkedFile == null) {
 						//The linked file doesn't exist. So it's an unresolved link
 						edges[link.link] = true
@@ -145,7 +145,7 @@ export class GraphManipulator {
 			}
 			if (cache.embeds != null) {
 				cache.embeds.forEach(embed => {
-					let linkedFile = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path)
+					const linkedFile = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path)
 					if (linkedFile == null) {
 						//The linked file doesn't exist. So it's an unresolved link
 						edges[embed.link] = true
@@ -179,13 +179,13 @@ export class GraphManipulator {
 
 		if (!renderSettings.showOrphans) {
 			let allLinks: string[] = []
-			for (let graphKey in graph) {
+			for (const graphKey in graph) {
 				if (Object.keys(graph[graphKey]["links"]).length > 0) {
 					allLinks.push(graphKey)
 				}
 				allLinks = allLinks.concat(Object.keys(graph[graphKey]["links"]))
 			}
-			for (let graphKey in graph) {
+			for (const graphKey in graph) {
 				if (!allLinks.includes(graphKey)) {
 					delete graph[graphKey]
 				}
@@ -197,9 +197,9 @@ export class GraphManipulator {
 		// NOT LIKE I SPEND LITERALLY 28h LOOKING AT COMPILED TS CODE TO FIGURE OUT HOW TO CONTROL THIS GRAPH BUT FINE
 		// NOT EVEN THE FILTER STUFF IS EXPOSED IN THIS API REEEEEEEEEEEEEEEEEEEEEEEEEEEE
 		function AddColorTag(filePath: string, nodeType: string) {
-			let searchQueries = engine.searchQueries
-			let engineOptions = engine.options
-			let fileFilter = engine.fileFilter
+			const searchQueries = engine.searchQueries
+			const engineOptions = engine.options
+			const fileFilter = engine.fileFilter
 			return !searchQueries || ("" === nodeType ? filePath === engineOptions.localFile || (fileFilter.hasOwnProperty(filePath) ? fileFilter[filePath] : !engine.hasFilter) : "tag" === nodeType ? searchQueries.every((function (e: any) {
 					return !!e.color || !!e.query.matchTag(filePath)
 				}
@@ -210,8 +210,8 @@ export class GraphManipulator {
 		}
 
 		// Just looping over all the nodes in the graph and adding the color tag when necessary
-		for (let graphKey in graph) {
-			let returnValue = AddColorTag(graphKey, graph[graphKey].type)
+		for (const graphKey in graph) {
+			const returnValue = AddColorTag(graphKey, graph[graphKey].type)
 			if(returnValue === true)
 				continue
 			graph[graphKey].color  = returnValue

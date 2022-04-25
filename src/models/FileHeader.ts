@@ -1,4 +1,5 @@
-import { HeadingCache } from "obsidian";
+import {HeadingCache} from "obsidian";
+
 // TODO refactor this
 export class FileHeader {
 	constructor(private cached: HeadingCache) {}

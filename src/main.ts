@@ -1,11 +1,5 @@
-import {
-	App, fuzzySearch, Notice,
-	Plugin,
-	PluginSettingTab, prepareQuery,
-	Setting, TFile, TFolder, WorkspaceLeaf
-} from 'obsidian';
+import {App, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {ContentRenderer} from "./modules/ContentRenderer";
-import {DataEngine} from "./types/DataEngine";
 import {GraphManipulator} from "./modules/GraphManipulator";
 import {EventEmitter} from "events";
 
@@ -47,15 +41,6 @@ export default class FolderIndex extends Plugin{
 		})
 		this.graphManipulator = new GraphManipulator(this.app, this)
 		this.graphManipulator.load()
-
-		this.addCommand({
-			id: "TestCommand",
-			name: "Test Command",
-			callback: () => {
-				let q = prepareQuery("file:Dashboard.md")
-				console.log(fuzzySearch(q, "Dashboard.md"));
-			}
-		})
 	}
 
 	onLayoutChange(){
