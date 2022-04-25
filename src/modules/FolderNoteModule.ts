@@ -11,7 +11,11 @@ export class FolderNoteModule {
 	}
 
 	load() {
-		this.plugin.registerEvent(this.app.vault.on("create", this.onFileCreate.bind(this)))
+		// Apparently loading the vault also triggers the create event. So we just wait till everything is ready
+		this.app.workspace.onLayoutReady(() => {
+			this.plugin.registerEvent(this.app.vault.on("create", this.onFileCreate.bind(this)))
+		})
+
 		this.plugin.registerEvent(this.app.vault.on("rename", this.onFileRename.bind(this)))
 		this.plugin.eventManager.on("fileExplorerFolderClick", this.onFolderClick.bind(this))
 		this.plugin.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this))
