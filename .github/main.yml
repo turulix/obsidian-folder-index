@@ -3,7 +3,7 @@ on:
     push:
         branches: [*]
     pull_request:
-        branches: [main]
+        branches: [master]
 jobs:
     eslint:
         runs-on: ubuntu-latest
