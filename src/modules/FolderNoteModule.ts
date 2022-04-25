@@ -36,7 +36,7 @@ export class FolderNoteModule {
 			}
 		})
 
-		if(this.plugin.settings.hideIndexFiles){
+		if (this.plugin.settings.hideIndexFiles) {
 			FolderNoteModule.hideAllIndexFiles()
 		}
 	}
@@ -54,18 +54,18 @@ export class FolderNoteModule {
 		}
 	}
 
-	private static hideAllIndexFiles(){
+	private static hideAllIndexFiles() {
 		let allFiles = document.getElementsByClassName("nav-file")
 		for (let i = allFiles.length - 1; i >= 0; i--) {
 			let file = allFiles[i]
 			let folderName = file.parentElement.parentElement.children[0].textContent
-			if(file.textContent == folderName){
+			if (file.textContent == folderName) {
 				file.addClass("hide-index-folder-note")
 			}
 		}
 	}
 
-	private static showAllIndexFiles(){
+	private static showAllIndexFiles() {
 		let hiddenDocuments = document.getElementsByClassName("hide-index-folder-note")
 		for (let i = hiddenDocuments.length - 1; i >= 0; i--) {
 			hiddenDocuments[i].removeClass("hide-index-folder-note")
@@ -73,34 +73,30 @@ export class FolderNoteModule {
 	}
 
 	private async onFolderClick(target: Element, path: string, name: string) {
-		if (this.plugin.settings.hideIndexFiles) {
-			let parent = target.parentElement
-			let folderChildren = parent.children[1]
-			for (let i = 0; i < folderChildren.children.length; i++) {
-				let child = folderChildren.children[i]
-				if (child.hasClass("nav-file")) {
-					if (child.children[0].getAttribute("data-path") == path + "/" + name + ".md") {
-						child.addClass("hide-index-folder-note")
-					}
-				}
-			}
-		}
-
 		let indexFile = this.app.vault.getAbstractFileByPath(path + "/" + name + ".md") as TFile
 		if (indexFile != null) {
 			await this.app.workspace.activeLeaf.openFile(indexFile)
 		} else if (this.plugin.settings.autoCreateIndexFile) {
-			indexFile = await this.app.vault.create(path + "/" + name + ".md", this.plugin.settings.indexFileInitText)
+			indexFile = await this.createIndexFile(path, name);
 			new Notice("Created IndexFile for: " + name)
 			await this.app.workspace.activeLeaf.openFile(indexFile)
-
 		}
+
+		if (this.plugin.settings.hideIndexFiles) {
+			FolderNoteModule.hideAllIndexFiles()
+		} else {
+			FolderNoteModule.showAllIndexFiles()
+		}
+	}
+
+	private async createIndexFile(path: string, name: string) {
+		return await this.app.vault.create(`${path}/${name}.md`, this.plugin.settings.indexFileInitText)
 	}
 
 	private async onFileCreate(file: TAbstractFile) {
 		if (file instanceof TFolder) {
 			if (this.plugin.settings.autoCreateIndexFile) {
-				await this.app.vault.create(`${file.path}/${file.name}.md`, this.plugin.settings.indexFileInitText)
+				await this.createIndexFile(file.path, file.name)
 				new Notice("Created IndexFile for: " + file.name)
 			}
 		}
