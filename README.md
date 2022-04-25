@@ -4,6 +4,15 @@
  - Automatic index file generation
  - Hiding index files in the file browser
  - Automatically renaming index files when renaming the folder
+ - Folder nodes on the Graph
+
+### How to use
+Its pretty simple. You simply install the Plugin like any other. After this you can click on any folder
+to open their index file, if none exists one will automatically be generated for you (You should definitely check out the settings and toggle the features you like)
+
+From now on you should be able to use folders like they are a normal note!
+
+Folders will also be added to the Graph View by default and link all files that are contained within it :D
 
 ### Manual Installation
 1. Go to [Releases](https://github.com/turulix/obsidian-folder-index/releases) and download the ZIP file from the latest release.
