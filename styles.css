@@ -1,4 +1,4 @@
 /*Idk maybe this fixes it?*/
-.idk-maybe-this-fixes-my-issue{
-	margin: 0;
+div.hide-index-folder-note {
+	display: none;
 }

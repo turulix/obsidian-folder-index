@@ -1,33 +1,24 @@
 import {App, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {IndexContentRenderer} from "./modules/IndexContentRenderer";
-import {GraphManipulator} from "./modules/GraphManipulator";
+import {GraphManipulatorModule} from "./modules/GraphManipulatorModule";
 import {EventEmitter} from "events";
-import {PluginSettingsTab} from "./models/PluginSettingsTab";
+import {DEFAULT_SETTINGS, PluginSetting, PluginSettingsTab} from "./models/PluginSettingsTab";
+import {FolderNoteModule} from "./modules/FolderNoteModule";
 
 // Remember to rename these classes and interfaces!
 
-export interface PluginSetting {
-	graphOverwrite: boolean;
-	skipFirstHeadline: boolean;
-	disableHeadlines: boolean;
-	rootIndexFile: string
-}
 
-const DEFAULT_SETTINGS: PluginSetting = {
-	skipFirstHeadline: true,
-	disableHeadlines: false,
-	graphOverwrite: true,
-	rootIndexFile: "Dashboard.md"
-}
 
-export default class FolderIndex extends Plugin {
+export default class FolderIndexPlugin extends Plugin {
 	settings: PluginSetting;
-	graphManipulator: GraphManipulator;
+	graphManipulator: GraphManipulatorModule;
+	folderNodeModule: FolderNoteModule;
 	eventManager: EventEmitter
 
 	async onload() {
 		console.log("Loading FolderTableContent")
 		this.eventManager = new EventEmitter()
+
 
 		await this.loadSettings();
 
@@ -39,8 +30,9 @@ export default class FolderIndex extends Plugin {
 		this.registerMarkdownCodeBlockProcessor("folder-index-content", (source, el, ctx) => {
 			ctx.addChild(new IndexContentRenderer(this.app, this, ctx.sourcePath, el))
 		})
-		this.graphManipulator = new GraphManipulator(this.app, this)
-		this.graphManipulator.load()
+
+		this.folderNodeModule = new FolderNoteModule(this.app, this)
+		this.graphManipulator = new GraphManipulatorModule(this.app, this)
 	}
 
 	onLayoutChange() {

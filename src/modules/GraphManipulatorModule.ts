@@ -1,6 +1,6 @@
 import {DataEngine} from "../types/DataEngine";
 import {App, TFile, TFolder, WorkspaceLeaf} from "obsidian";
-import FolderIndex from "../main";
+import FolderIndexPlugin from "../main";
 
 type NodeType = "" | "focused" | "tag" | "unresolved" | "attachment"
 
@@ -21,11 +21,12 @@ type Graph = {
 	[id: string]: GraphNode
 }
 
-export class GraphManipulator {
+export class GraphManipulatorModule {
 	private graphsLeafs: WorkspaceLeaf[]
 	private oldGraphOverwrite: boolean
 
-	constructor(private app: App, private plugin: FolderIndex) {
+	constructor(private app: App, private plugin: FolderIndexPlugin) {
+		this.load()
 	}
 
 	private onLayoutChange() {
@@ -118,55 +119,56 @@ export class GraphManipulator {
 					}
 				})
 			}
-
-			if (cache.links != null) {
-				cache.links.forEach(link => {
-					if(link.link.contains("#")){
-						link.link = link.link.split(/#/)[0]
-					}
-					const linkedFile = this.app.metadataCache.getFirstLinkpathDest(link.link, file.path)
-					if (linkedFile == null) {
-						//The linked file doesn't exist. So it's an unresolved link
-						edges[link.link] = true
-						if (!renderSettings.hideUnresolved) {
-							graph[link.link] = {
+			if (cache != null) {
+				if (cache.links != null) {
+					cache.links.forEach(link => {
+						if (link.link.contains("#")) {
+							link.link = link.link.split(/#/)[0]
+						}
+						const linkedFile = this.app.metadataCache.getFirstLinkpathDest(link.link, file.path)
+						if (linkedFile == null) {
+							//The linked file doesn't exist. So it's an unresolved link
+							edges[link.link] = true
+							if (!renderSettings.hideUnresolved) {
+								graph[link.link] = {
+									links: {},
+									type: "unresolved"
+								}
+							}
+						} else {
+							//The Linked file exists, so we link to it and don't add it
+							// because it will add itself later.
+							edges[linkedFile.path] = true
+						}
+					})
+				}
+				if (cache.tags != null && renderSettings.showTags == true) {
+					cache.tags.forEach(tag => {
+						// We have to add it, it will not add itself.
+						graph[tag.tag] = {
+							links: {},
+							type: "tag"
+						}
+						edges[tag.tag] = true
+					})
+				}
+				if (cache.embeds != null) {
+					cache.embeds.forEach(embed => {
+						const linkedFile = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path)
+						if (linkedFile == null) {
+							//The linked file doesn't exist. So it's an unresolved link
+							edges[embed.link] = true
+							graph[embed.link] = {
 								links: {},
 								type: "unresolved"
 							}
+						} else {
+							//The Linked file exists, so we link to it and don't add it
+							// because it will add itself later.
+							edges[linkedFile.path] = true
 						}
-					} else {
-						//The Linked file exists, so we link to it and don't add it
-						// because it will add itself later.
-						edges[linkedFile.path] = true
-					}
-				})
-			}
-			if (cache.tags != null && renderSettings.showTags == true) {
-				cache.tags.forEach(tag => {
-					// We have to add it, it will not add itself.
-					graph[tag.tag] = {
-						links: {},
-						type: "tag"
-					}
-					edges[tag.tag] = true
-				})
-			}
-			if (cache.embeds != null) {
-				cache.embeds.forEach(embed => {
-					const linkedFile = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path)
-					if (linkedFile == null) {
-						//The linked file doesn't exist. So it's an unresolved link
-						edges[embed.link] = true
-						graph[embed.link] = {
-							links: {},
-							type: "unresolved"
-						}
-					} else {
-						//The Linked file exists, so we link to it and don't add it
-						// because it will add itself later.
-						edges[linkedFile.path] = true
-					}
-				})
+					})
+				}
 			}
 
 			let type: NodeType = ""
