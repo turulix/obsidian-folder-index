@@ -23,7 +23,7 @@ export class FolderNoteModule {
 			const elemTarget = (evt.target as Element)
 			let folderElem = elemTarget;
 
-			let className = elemTarget.className.toString();
+			const className = elemTarget.className.toString();
 			if (className.contains('nav-folder-title-content')) {
 				folderName = folderElem.getText();
 				folderElem = elemTarget.parentElement;
@@ -55,10 +55,10 @@ export class FolderNoteModule {
 	}
 
 	private static hideAllIndexFiles() {
-		let allFiles = document.getElementsByClassName("nav-file")
+		const allFiles = document.getElementsByClassName("nav-file")
 		for (let i = allFiles.length - 1; i >= 0; i--) {
-			let file = allFiles[i]
-			let folderName = file.parentElement.parentElement.children[0].textContent
+			const file = allFiles[i]
+			const folderName = file.parentElement.parentElement.children[0].textContent
 			if (file.textContent == folderName) {
 				file.addClass("hide-index-folder-note")
 			}
@@ -66,7 +66,7 @@ export class FolderNoteModule {
 	}
 
 	private static showAllIndexFiles() {
-		let hiddenDocuments = document.getElementsByClassName("hide-index-folder-note")
+		const hiddenDocuments = document.getElementsByClassName("hide-index-folder-note")
 		for (let i = hiddenDocuments.length - 1; i >= 0; i--) {
 			hiddenDocuments[i].removeClass("hide-index-folder-note")
 		}
@@ -104,15 +104,23 @@ export class FolderNoteModule {
 
 	private async onFileRename(file: TAbstractFile, oldPath: string) {
 		if (file instanceof TFolder && this.plugin.settings.autoRenameIndexFile) {
-			let indexFile = file.children.find(value => {
+			const indexFile = file.children.find(value => {
 				return value instanceof TFile && value.basename == oldPath;
 			}) as TFile | null
 
+			if (indexFile == null) {
+				if (this.plugin.settings.autoCreateIndexFile) {
+					await this.createIndexFile(file.path, file.name + ".md")
+				} else {
+					return
+				}
+			}
+
 			// We are too fast. Have to update the path our self lol :D
 			indexFile.path = file.path + "/" + indexFile.name
-			let newFilePath = file.path + "/" + file.name + "." + indexFile.extension
+			const newFilePath = file.path + "/" + file.name + "." + indexFile.extension
 
-			let conflictingFile = file.children.find(value => {
+			const conflictingFile = file.children.find(value => {
 				return value instanceof TFile && value.basename == file.name;
 			})
 

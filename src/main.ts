@@ -1,4 +1,4 @@
-import {App, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {Plugin} from 'obsidian';
 import {IndexContentRenderer} from "./modules/IndexContentRenderer";
 import {GraphManipulatorModule} from "./modules/GraphManipulatorModule";
 import {EventEmitter} from "events";
