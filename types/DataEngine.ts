@@ -5,7 +5,9 @@ export interface DataEngine {
 	app: App
 	renderer: Renderer
 	view: View
-	options: {}
+	options: {
+		localFile: boolean | any;
+	}
 	getOptions: Function
 	load: Function
 	onCssChange: Function

@@ -1,12 +1,16 @@
 import {DataEngine} from "../types/DataEngine";
-import {App, Notice, prepareQuery, TFile, TFolder, WorkspaceLeaf, FuzzyMatch} from "obsidian";
-import FolderIndex, {PluginSetting} from "../main";
+import {App, TFile, TFolder, WorkspaceLeaf} from "obsidian";
+import FolderIndex from "../main";
 
 type NodeType = "" | "focused" | "tag" | "unresolved" | "attachment"
 
 type GraphNode = {
 	links: GraphLink;
-	type: NodeType
+	type: NodeType,
+	color?: {
+		a: number
+		rgb: number
+	}
 };
 
 type GraphLink = {
@@ -86,10 +90,9 @@ export class GraphManipulator {
 	render(engine: DataEngine) {
 		let renderSettings = engine.getOptions()
 		let graph: Graph = {}
-		debugger;
 
 		this.app.vault.getFiles().forEach(async file => {
-			if(Object.keys(engine.fileFilter).length > 0 &&!engine.fileFilter[file.path] ){
+			if (Object.keys(engine.fileFilter).length > 0 && !engine.fileFilter[file.path]) {
 				return;
 			}
 			let edges: GraphLink = {}
@@ -187,6 +190,31 @@ export class GraphManipulator {
 					delete graph[graphKey]
 				}
 			}
+		}
+
+		//Fix Colors
+		// IDK how it works, but I reverse engineered it out of the Application, and it does ¯\_(ツ)_/¯
+		// NOT LIKE I SPEND LITERALLY 28h LOOKING AT COMPILED TS CODE TO FIGURE OUT HOW TO CONTROL THIS GRAPH BUT FINE
+		// NOT EVEN THE FILTER STUFF IS EXPOSED IN THIS API REEEEEEEEEEEEEEEEEEEEEEEEEEEE
+		function AddColorTag(filePath: string, nodeType: string) {
+			let searchQueries = engine.searchQueries
+			let engineOptions = engine.options
+			let fileFilter = engine.fileFilter
+			return !searchQueries || ("" === nodeType ? filePath === engineOptions.localFile || (fileFilter.hasOwnProperty(filePath) ? fileFilter[filePath] : !engine.hasFilter) : "tag" === nodeType ? searchQueries.every((function (e: any) {
+					return !!e.color || !!e.query.matchTag(filePath)
+				}
+			)) : "attachment" !== nodeType || searchQueries.every((function (e: any) {
+					return !!e.color || !!e.query.matchFilepath(filePath)
+				}
+			)))
+		}
+
+		// Just looping over all the nodes in the graph and adding the color tag when necessary
+		for (let graphKey in graph) {
+			let returnValue = AddColorTag(graphKey, graph[graphKey].type)
+			if(returnValue === true)
+				continue
+			graph[graphKey].color  = returnValue
 		}
 
 		engine.renderer.setData({
