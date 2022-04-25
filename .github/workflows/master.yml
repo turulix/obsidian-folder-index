@@ -17,4 +17,4 @@ jobs:
               run: npm run build
 
             - name: Run ESLint
-              run: eslint .\src\
+              run: npx eslint .\src\
