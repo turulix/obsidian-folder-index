@@ -41,7 +41,6 @@ export default class FolderIndexPlugin extends Plugin {
 	}
 
 	onSettingsUpdate() {
-		debugger
 		if (this.settings.graphOverwrite != this.oldGraphSetting) {
 			if (this.settings.graphOverwrite) {
 				this.graphManipulator = new GraphManipulatorModule(this.app, this)
