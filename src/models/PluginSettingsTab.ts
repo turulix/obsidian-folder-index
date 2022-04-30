@@ -15,7 +15,7 @@ export interface PluginSetting {
 export const DEFAULT_SETTINGS: PluginSetting = {
 	skipFirstHeadline: true,
 	disableHeadlines: false,
-	graphOverwrite: true,
+	graphOverwrite: false,
 	rootIndexFile: "Dashboard.md",
 	autoCreateIndexFile: true,
 	autoRenameIndexFile: true,
