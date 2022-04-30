@@ -24,10 +24,18 @@ export class FolderNoteModule {
 			let folderPath = '';
 			let folderName = '';
 
-			const elemTarget = (evt.target as Element)
+			if(!(evt.target instanceof HTMLElement)){
+				return
+			}
+
+			const elemTarget = (evt.target as HTMLElement)
 			let folderElem = elemTarget;
 
 			const className = elemTarget.className.toString();
+			if(elemTarget.parentElement.className.contains("mod-root"))
+				return;
+			if(elemTarget.parentElement.parentElement.className.contains("mod-root"))
+				return;
 			if (className.contains('nav-folder-title-content')) {
 				folderName = folderElem.getText();
 				folderElem = elemTarget.parentElement;
@@ -79,11 +87,11 @@ export class FolderNoteModule {
 	private async onFolderClick(target: Element, path: string, name: string) {
 		let indexFile = this.app.vault.getAbstractFileByPath(path + "/" + name + ".md") as TFile
 		if (indexFile != null) {
-			await this.app.workspace.activeLeaf.openFile(indexFile)
+			await this.app.workspace.getLeaf().openFile(indexFile)
 		} else if (this.plugin.settings.autoCreateIndexFile) {
 			indexFile = await this.createIndexFile(path, name);
 			new Notice("Created IndexFile for: " + name)
-			await this.app.workspace.activeLeaf.openFile(indexFile)
+			await this.app.workspace.getLeaf().openFile(indexFile)
 		}
 
 		if (this.plugin.settings.hideIndexFiles) {
@@ -109,15 +117,20 @@ export class FolderNoteModule {
 	private async onFileRename(file: TAbstractFile, oldPath: string) {
 		if (file instanceof TFolder && this.plugin.settings.autoRenameIndexFile) {
 			const indexFile = file.children.find(value => {
-				return value instanceof TFile && value.basename == oldPath;
+				return value instanceof TFile && value.basename == oldPath.split(/\//).last();
 			}) as TFile | null
 
 			if (indexFile == null) {
 				if (this.plugin.settings.autoCreateIndexFile) {
 					await this.createIndexFile(file.path, file.name + ".md")
+					return
 				} else {
 					return
 				}
+			}
+
+			if(indexFile.basename == file.name){
+				return
 			}
 
 			// We are too fast. Have to update the path our self lol :D

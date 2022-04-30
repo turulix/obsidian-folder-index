@@ -8,12 +8,12 @@ import {FolderNoteModule} from "./modules/FolderNoteModule";
 // Remember to rename these classes and interfaces!
 
 
-
 export default class FolderIndexPlugin extends Plugin {
 	settings: PluginSetting;
-	graphManipulator: GraphManipulatorModule;
+	graphManipulator: GraphManipulatorModule | null;
 	folderNodeModule: FolderNoteModule;
 	eventManager: EventEmitter
+	oldGraphSetting = false
 
 	async onload() {
 		console.log("Loading FolderTableContent")
@@ -22,17 +22,34 @@ export default class FolderIndexPlugin extends Plugin {
 
 		await this.loadSettings();
 
+		this.oldGraphSetting = this.settings.graphOverwrite
+
 		this.addSettingTab(new PluginSettingsTab(this.app, this));
 
 		this.app.workspace.onLayoutReady(this.onLayoutReady.bind(this))
 		this.registerEvent(this.app.workspace.on("layout-change", this.onLayoutChange.bind(this)))
+		this.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this))
 
 		this.registerMarkdownCodeBlockProcessor("folder-index-content", (source, el, ctx) => {
 			ctx.addChild(new IndexContentRenderer(this.app, this, ctx.sourcePath, el))
 		})
 
 		this.folderNodeModule = new FolderNoteModule(this.app, this)
-		this.graphManipulator = new GraphManipulatorModule(this.app, this)
+		if (this.settings.graphOverwrite) {
+			this.graphManipulator = new GraphManipulatorModule(this.app, this)
+		}
+	}
+
+	onSettingsUpdate() {
+		debugger
+		if (this.settings.graphOverwrite != this.oldGraphSetting) {
+			if (this.settings.graphOverwrite) {
+				this.graphManipulator = new GraphManipulatorModule(this.app, this)
+			} else {
+				this.graphManipulator.unload()
+			}
+			this.oldGraphSetting = this.settings.graphOverwrite
+		}
 	}
 
 	onLayoutChange() {
@@ -47,6 +64,7 @@ export default class FolderIndexPlugin extends Plugin {
 		console.log("Unloading FolderTableContent")
 		this.eventManager.removeAllListeners()
 		this.graphManipulator.unload()
+		this.folderNodeModule.unload()
 	}
 
 	async loadSettings() {
