@@ -24,4 +24,4 @@ Folders will also be added to the Graph View by default and link all files that 
 I literally spend multiple nights reverse engineering obsidian to fix bugs that annoyed me.
 Like the graph not properly showing the connections because the lists are rendered after the fact.
 So if you want to donate me a coffee you can do so at<br><br>
-[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="BuyMeACoffee" width="100">](https://www.buymeacoffee.com/turulix)x
+[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="BuyMeACoffee" width="100">](https://www.buymeacoffee.com/turulix)
