@@ -62,7 +62,9 @@ export default class FolderIndexPlugin extends Plugin {
 	async onunload() {
 		console.log("Unloading FolderTableContent")
 		this.eventManager.removeAllListeners()
-		this.graphManipulator.unload()
+		if (this.graphManipulator != null) {
+			this.graphManipulator.unload()
+		}
 		this.folderNodeModule.unload()
 	}
 
