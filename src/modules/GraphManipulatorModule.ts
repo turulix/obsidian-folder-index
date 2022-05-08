@@ -1,5 +1,5 @@
 import {DataEngine} from "../types/DataEngine";
-import {App, TFile, TFolder, WorkspaceLeaf} from "obsidian";
+import {App, parseFrontMatterTags, TFile, TFolder, WorkspaceLeaf} from "obsidian";
 import FolderIndexPlugin from "../main";
 
 type NodeType = "" | "focused" | "tag" | "unresolved" | "attachment"
@@ -142,7 +142,20 @@ export class GraphManipulatorModule {
 						}
 					})
 				}
+				if (cache.frontmatter != null) {
+					let frontMatterTags = parseFrontMatterTags(cache.frontmatter)
+					if (frontMatterTags != null && renderSettings.showTags == true) {
+						frontMatterTags.forEach(tag => {
+							graph[tag] = {
+								links: {},
+								type: "tag"
+							}
+							edges[tag] = true
+						})
+					}
+				}
 				if (cache.tags != null && renderSettings.showTags == true) {
+
 					cache.tags.forEach(tag => {
 						// We have to add it, it will not add itself.
 						graph[tag.tag] = {
