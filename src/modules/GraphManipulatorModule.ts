@@ -143,7 +143,7 @@ export class GraphManipulatorModule {
 					})
 				}
 				if (cache.frontmatter != null) {
-					let frontMatterTags = parseFrontMatterTags(cache.frontmatter)
+					const frontMatterTags = parseFrontMatterTags(cache.frontmatter)
 					if (frontMatterTags != null && renderSettings.showTags == true) {
 						frontMatterTags.forEach(tag => {
 							graph[tag] = {
