@@ -19,7 +19,7 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	rootIndexFile: "Dashboard.md",
 	autoCreateIndexFile: true,
 	autoRenameIndexFile: true,
-	hideIndexFiles: true,
+	hideIndexFiles: false,
 	indexFileInitText: "```folder-index-content\n```"
 }
 
@@ -92,12 +92,14 @@ export class PluginSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Hide IndexFile")
-			.setDesc("This will hide IndexFiles from the file explorer")
+			.setDesc("This will hide IndexFiles from the file explorer (Disabled as it causes bugs right now)")
 			.addToggle(component => component.setValue(this.plugin.settings.hideIndexFiles)
 				.onChange(async (value) => {
 					this.plugin.settings.hideIndexFiles = value
 					await this.plugin.saveSettings()
-				}))
+				})
+				.setDisabled(true)
+			)
 
 		containerEl.createEl('h2', {text: 'Content Renderer Settings'});
 

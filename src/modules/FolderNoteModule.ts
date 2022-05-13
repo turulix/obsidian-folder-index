@@ -24,7 +24,7 @@ export class FolderNoteModule {
 			let folderPath = '';
 			let folderName = '';
 
-			if(!(evt.target instanceof HTMLElement)){
+			if (!(evt.target instanceof HTMLElement)) {
 				return
 			}
 
@@ -32,9 +32,9 @@ export class FolderNoteModule {
 			let folderElem = elemTarget;
 
 			const className = elemTarget.className.toString();
-			if(elemTarget.parentElement.className.contains("mod-root"))
+			if (elemTarget.parentElement.className.contains("mod-root"))
 				return;
-			if(elemTarget.parentElement.parentElement.className.contains("mod-root"))
+			if (elemTarget.parentElement.parentElement.className.contains("mod-root"))
 				return;
 			if (className.contains('nav-folder-title-content')) {
 				folderName = folderElem.getText();
@@ -67,29 +67,33 @@ export class FolderNoteModule {
 	}
 
 	private static hideAllIndexFiles() {
-		const allFiles = document.getElementsByClassName("nav-file")
+		const modRoot = document.getElementsByClassName("nav-folder mod-root")[0]
+		const allFiles = modRoot.getElementsByClassName("nav-file")
 		for (let i = allFiles.length - 1; i >= 0; i--) {
 			const file = allFiles[i]
-			const folderName = file.parentElement.parentElement.children[0].textContent
-			if (file.textContent == folderName) {
+			const dataPath = file.getElementsByClassName("nav-file-title")[0].getAttribute("data-path")
+			const pathParts = dataPath.split(/\//)
+			const parentFolder = pathParts.at(-2)
+			if (parentFolder + ".md" == pathParts.at(-1)) {
 				file.addClass("hide-index-folder-note")
 			}
 		}
 	}
 
 	private static showAllIndexFiles() {
-		const hiddenDocuments = document.getElementsByClassName("hide-index-folder-note")
+/*		const hiddenDocuments = document.getElementsByClassName("hide-index-folder-note")
 		for (let i = hiddenDocuments.length - 1; i >= 0; i--) {
 			hiddenDocuments[i].removeClass("hide-index-folder-note")
-		}
+		}*/
 	}
 
 	private async onFolderClick(target: Element, path: string, name: string) {
+		console.log("Path: " + path + " | Name: " + name)
 		let indexFile = this.app.vault.getAbstractFileByPath(path + "/" + name + ".md") as TFile
 		if (indexFile != null) {
 			await this.app.workspace.getLeaf().openFile(indexFile)
 		} else if (this.plugin.settings.autoCreateIndexFile) {
-			indexFile = await this.createIndexFile(path, name);
+			indexFile = await this.createIndexFile(path, name)
 			new Notice("Created IndexFile for: " + name)
 			await this.app.workspace.getLeaf().openFile(indexFile)
 		}
@@ -129,7 +133,7 @@ export class FolderNoteModule {
 				}
 			}
 
-			if(indexFile.basename == file.name){
+			if (indexFile.basename == file.name) {
 				return
 			}
 

@@ -19,8 +19,11 @@ export default class FolderIndexPlugin extends Plugin {
 		console.log("Loading FolderTableContent")
 		this.eventManager = new EventEmitter()
 
-
 		await this.loadSettings();
+
+		//TODO: Remove once fixed
+		this.settings.hideIndexFiles = false;
+		await this.saveSettings();
 
 		this.oldGraphSetting = this.settings.graphOverwrite
 
