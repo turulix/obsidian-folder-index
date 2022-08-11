@@ -14,6 +14,7 @@ export default class FolderIndexPlugin extends Plugin {
 	folderNodeModule: FolderNoteModule;
 	eventManager: EventEmitter
 	oldGraphSetting = false
+	includeFileContent = false;
 
 	async onload() {
 		console.log("Loading FolderTableContent")
@@ -25,8 +26,8 @@ export default class FolderIndexPlugin extends Plugin {
 		this.settings.hideIndexFiles = false;
 		await this.saveSettings();
 
-		this.oldGraphSetting = this.settings.graphOverwrite
-
+		this.oldGraphSetting = this.settings.graphOverwrite;
+		this.includeFileContent = this.settings.includeFileContent;
 		this.addSettingTab(new PluginSettingsTab(this.app, this));
 
 		this.app.workspace.onLayoutReady(this.onLayoutReady.bind(this))

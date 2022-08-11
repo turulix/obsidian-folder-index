@@ -7,6 +7,7 @@ export interface PluginSetting {
 	disableHeadlines: boolean;
 	rootIndexFile: string;
 	indexFileInitText: string;
+	includeFileContent: boolean,
 	autoCreateIndexFile: boolean;
 	autoRenameIndexFile: boolean;
 	hideIndexFiles: boolean;
@@ -19,6 +20,7 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	rootIndexFile: "Dashboard.md",
 	autoCreateIndexFile: true,
 	autoRenameIndexFile: true,
+	includeFileContent: false,
 	hideIndexFiles: false,
 	indexFileInitText: "```folder-index-content\n```"
 }
@@ -80,7 +82,16 @@ export class PluginSettingsTab extends PluginSettingTab {
 					this.plugin.settings.autoCreateIndexFile = value
 					await this.plugin.saveSettings()
 				}))
-
+		
+		new Setting(containerEl)
+			.setName("Auto include preview")
+			.setDesc("This will automatically include previews when creating index files (!) ")
+			.addToggle((component) => component.setValue(this.plugin.settings.includeFileContent)
+				.onChange((value) => __async(this, null, function* () {
+					this.plugin.settings.includeFileContent = value;
+					yield this.plugin.saveSettings();
+			})));
+		
 		new Setting(containerEl)
 			.setName("Automatically Rename IndexFile")
 			.setDesc("This will automatically rename the folders index file as you rename folders")
