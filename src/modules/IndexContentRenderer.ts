@@ -40,8 +40,8 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 				const headings = this.app.metadataCache.getFileCache(value).headings
 				const fileLink = this.app.metadataCache.fileToLinktext(value, this.filePath)
 
-				list.push(`1. [[${fileLink}|${value.basename}]]`)
-				if (headings != null && !this.plugin.settings.disableHeadlines) {
+				list.push(`1. ${this.plugin.settings.includeFileContent? '!': ''}[[${fileLink}|${value.basename}]]`);
+        		if (headings != null && !this.plugin.settings.disableHeadlines) {
 					for (let i = this.plugin.settings.skipFirstHeadline ? 1 : 0; i < headings.length; i++) {
 						const heading = new FileHeader(headings[i])
 						const numIndents = new Array(Math.max(1, heading.level - headings[0].level));

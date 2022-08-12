@@ -25,8 +25,7 @@ export default class FolderIndexPlugin extends Plugin {
 		this.settings.hideIndexFiles = false;
 		await this.saveSettings();
 
-		this.oldGraphSetting = this.settings.graphOverwrite
-
+		this.oldGraphSetting = this.settings.graphOverwrite;
 		this.addSettingTab(new PluginSettingsTab(this.app, this));
 
 		this.app.workspace.onLayoutReady(this.onLayoutReady.bind(this))
