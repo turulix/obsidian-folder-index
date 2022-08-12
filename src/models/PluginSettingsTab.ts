@@ -87,10 +87,10 @@ export class PluginSettingsTab extends PluginSettingTab {
 			.setName("Auto include preview")
 			.setDesc("This will automatically include previews when creating index files (!) ")
 			.addToggle((component) => component.setValue(this.plugin.settings.includeFileContent)
-				.onChange((value) => __async(this, null, function* () {
+				.onChange(async (value) => {
 					this.plugin.settings.includeFileContent = value;
-					yield this.plugin.saveSettings();
-			})));
+					await this.plugin.saveSettings();
+				}));
 		
 		new Setting(containerEl)
 			.setName("Automatically Rename IndexFile")
