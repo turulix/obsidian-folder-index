@@ -6,6 +6,9 @@ import {PluginSetting} from "../models/PluginSettingsTab";
 // This one is inspired by xpgo's FolderNote
 // https://github.com/xpgo/obsidian-folder-note-plugin
 export class FolderNoteModule {
+	state_by_plugin = false;
+	previous_file: TFile | null = null
+
 	constructor(private app: App, private plugin: FolderIndexPlugin) {
 		this.load()
 	}
@@ -19,6 +22,7 @@ export class FolderNoteModule {
 		this.plugin.registerEvent(this.app.vault.on("rename", this.onFileRename.bind(this)))
 		this.plugin.eventManager.on("fileExplorerFolderClick", this.onFolderClick.bind(this))
 		this.plugin.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this))
+		this.plugin.eventManager.on("onLayoutChange", this.onLayoutChange.bind(this))
 
 		this.plugin.registerDomEvent(document, 'click', (evt: MouseEvent) => {
 			let folderPath = '';
@@ -58,7 +62,37 @@ export class FolderNoteModule {
 		FolderNoteModule.showAllIndexFiles()
 	}
 
-	private async onSettingsUpdate(settings: PluginSetting) {
+	private async onLayoutChange() {
+		if (!this.plugin.settings.autoPreviewMode) {
+			return;
+		}
+
+		const current_file = await this.app.workspace.getActiveFile()
+		if (this.previous_file == null) {
+			this.previous_file = current_file
+		}
+		if (current_file.path != this.previous_file.path) {
+			// File Changed. We need to check if the file is a folder note and change mode if needed
+			const is_index_file = current_file.basename == current_file.parent.name
+			const state = this.app.workspace.getLeaf().getViewState()
+			if (is_index_file) {
+				//Swap to preview mode.
+				state.state.mode = "preview"
+				await this.app.workspace.getLeaf().setViewState(state)
+				this.state_by_plugin = true
+			} else {
+				if (this.state_by_plugin) {
+					//Swap back to edit mode
+					state.state.mode = "source"
+					await this.app.workspace.getLeaf().setViewState(state)
+					this.state_by_plugin = false
+				}
+			}
+		}
+		this.previous_file = current_file
+	}
+
+	private async onSettingsUpdate(_settings: PluginSetting) {
 		if (!this.plugin.settings.hideIndexFiles) {
 			FolderNoteModule.showAllIndexFiles()
 		} else {
@@ -81,14 +115,14 @@ export class FolderNoteModule {
 	}
 
 	private static showAllIndexFiles() {
-/*		const hiddenDocuments = document.getElementsByClassName("hide-index-folder-note")
-		for (let i = hiddenDocuments.length - 1; i >= 0; i--) {
-			hiddenDocuments[i].removeClass("hide-index-folder-note")
-		}*/
+		/*		const hiddenDocuments = document.getElementsByClassName("hide-index-folder-note")
+				for (let i = hiddenDocuments.length - 1; i >= 0; i--) {
+					hiddenDocuments[i].removeClass("hide-index-folder-note")
+				}*/
 	}
 
-	private async onFolderClick(target: Element, path: string, name: string) {
-		console.log("Path: " + path + " | Name: " + name)
+	private async onFolderClick(_target: Element, path: string, name: string) {
+		//console.log("Path: " + path + " | Name: " + name)
 		let indexFile = this.app.vault.getAbstractFileByPath(path + "/" + name + ".md") as TFile
 		if (indexFile != null) {
 			await this.app.workspace.getLeaf().openFile(indexFile)

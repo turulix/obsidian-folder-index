@@ -11,6 +11,7 @@ export interface PluginSetting {
 	autoCreateIndexFile: boolean;
 	autoRenameIndexFile: boolean;
 	hideIndexFiles: boolean;
+	autoPreviewMode: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -22,7 +23,8 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	autoRenameIndexFile: true,
 	includeFileContent: false,
 	hideIndexFiles: false,
-	indexFileInitText: "```folder-index-content\n```"
+	indexFileInitText: "```folder-index-content\n```",
+	autoPreviewMode: false
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -130,6 +132,15 @@ export class PluginSettingsTab extends PluginSettingTab {
 			.addToggle(component => component.setValue(this.plugin.settings.disableHeadlines)
 				.onChange(async (value) => {
 					this.plugin.settings.disableHeadlines = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Automatic Preview mode")
+			.setDesc("This will automatically swap to preview mode when opening an index file")
+			.addToggle(component => component.setValue(this.plugin.settings.autoPreviewMode)
+				.onChange(async (value) => {
+					this.plugin.settings.autoPreviewMode = value
 					await this.plugin.saveSettings()
 				}))
 
