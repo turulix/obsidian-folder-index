@@ -6,7 +6,7 @@ import {PluginSetting} from "../models/PluginSettingsTab";
 // This one is inspired by xpgo's FolderNote
 // https://github.com/xpgo/obsidian-folder-note-plugin
 export class FolderNoteModule {
-	state_by_plugin: boolean = false;
+	state_by_plugin = false;
 	previous_file: TFile | null = null
 
 	constructor(private app: App, private plugin: FolderIndexPlugin) {
@@ -67,14 +67,14 @@ export class FolderNoteModule {
 			return;
 		}
 
-		let current_file = await this.app.workspace.getActiveFile()
+		const current_file = await this.app.workspace.getActiveFile()
 		if (this.previous_file == null) {
 			this.previous_file = current_file
 		}
 		if (current_file.path != this.previous_file.path) {
 			// File Changed. We need to check if the file is a folder note and change mode if needed
-			let is_index_file = current_file.basename == current_file.parent.name
-			let state = this.app.workspace.getLeaf().getViewState()
+			const is_index_file = current_file.basename == current_file.parent.name
+			const state = this.app.workspace.getLeaf().getViewState()
 			if (is_index_file) {
 				//Swap to preview mode.
 				state.state.mode = "preview"
