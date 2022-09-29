@@ -140,7 +140,7 @@ export class FolderNoteModule {
 	}
 
 	private async createIndexFile(path: string, name: string) {
-		return await this.app.vault.create(`${path}/${name}.md`, this.plugin.settings.indexFileInitText)
+		return await this.app.vault.create(`${path}/${name}.md`, this.plugin.settings.indexFileInitText.replace("{{folder}}", name))
 	}
 
 	private async onFileCreate(file: TAbstractFile) {
