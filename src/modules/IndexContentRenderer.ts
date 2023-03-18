@@ -32,19 +32,31 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 	private buildMarkdownText(filtered_files: TAbstractFile[]): string {
 		const list: string[] = []
 
+		if (this.plugin.settings.sortIndexFilesAlphabetically) {
+			filtered_files = filtered_files.sort((a, b) => a.name.localeCompare(b.name))
+		}
+
 		filtered_files.forEach(value => {
 			if (value instanceof TFile) {
 				if (value.basename == value.parent.name) {
 					return
 				}
-				const headings = this.app.metadataCache.getFileCache(value).headings
+
+				let headings = this.app.metadataCache.getFileCache(value).headings
+
 				const fileLink = this.app.metadataCache.fileToLinktext(value, this.filePath)
 
 				list.push(`1. ${this.plugin.settings.includeFileContent ? '!' : ''}[[${fileLink}|${value.basename}]]`);
 				if (headings != null && !this.plugin.settings.disableHeadlines) {
-					for (let i = this.plugin.settings.skipFirstHeadline ? 1 : 0; i < headings.length; i++) {
+					if (this.plugin.settings.skipFirstHeadline) {
+						headings = headings.slice(1)
+					}
+					if (this.plugin.settings.sortHeadersAlphabetically) {
+						headings = headings.sort((a, b) => a.heading.localeCompare(b.heading))
+					}
+					for (let i = 0; i < headings.length; i++) {
 						const heading = new FileHeader(headings[i])
-						const numIndents = new Array(Math.max(1, heading.level - headings[0].level));
+						const numIndents = new Array(Math.max(1, heading.level - headings[0].level + (this.plugin.settings.skipFirstHeadline ? 1 : 0)));
 
 						const indent = numIndents.fill("\t").join("");
 						list.push(`${indent}1. [[${fileLink}#${heading.rawHeading}|${heading.rawHeading}]]`);

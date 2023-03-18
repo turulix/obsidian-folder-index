@@ -12,6 +12,8 @@ export interface PluginSetting {
 	autoRenameIndexFile: boolean;
 	hideIndexFiles: boolean;
 	autoPreviewMode: boolean;
+	sortIndexFilesAlphabetically: boolean;
+	sortHeadersAlphabetically: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -24,7 +26,9 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	includeFileContent: false,
 	hideIndexFiles: false,
 	indexFileInitText: "---\ntags: MOCs\n---\n\n# MOC: {{folder}}\n\n---\n\n```folder-index-content\n```",
-	autoPreviewMode: false
+	autoPreviewMode: false,
+	sortIndexFilesAlphabetically: false,
+	sortHeadersAlphabetically: false
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -84,7 +88,7 @@ export class PluginSettingsTab extends PluginSettingTab {
 					this.plugin.settings.autoCreateIndexFile = value
 					await this.plugin.saveSettings()
 				}))
-		
+
 		new Setting(containerEl)
 			.setName("Auto include preview")
 			.setDesc("This will automatically include previews when creating index files (!) ")
@@ -93,7 +97,7 @@ export class PluginSettingsTab extends PluginSettingTab {
 					this.plugin.settings.includeFileContent = value;
 					await this.plugin.saveSettings();
 				}));
-		
+
 		new Setting(containerEl)
 			.setName("Automatically Rename IndexFile")
 			.setDesc("This will automatically rename the folders index file as you rename folders")
@@ -144,6 +148,23 @@ export class PluginSettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings()
 				}))
 
+		new Setting(containerEl)
+			.setName("Sort Indexfiles Alphabetically")
+			.setDesc("This will sort the Indexfiles alphabetically")
+			.addToggle(component => component.setValue(this.plugin.settings.sortIndexFilesAlphabetically)
+				.onChange(async (value) => {
+					this.plugin.settings.sortIndexFilesAlphabetically = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Sort Headers Alphabetically")
+			.setDesc("This will sort the Headers within a file alphabetically")
+			.addToggle(component => component.setValue(this.plugin.settings.sortHeadersAlphabetically)
+				.onChange(async (value) => {
+					this.plugin.settings.sortHeadersAlphabetically = value
+					await this.plugin.saveSettings()
+				}))
 
 	}
 }
