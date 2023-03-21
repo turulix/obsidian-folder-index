@@ -43,6 +43,7 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 				}
 
 				let headings = this.app.metadataCache.getFileCache(value).headings
+				headings = headings.sort((a, b) => a.position.start.offset - b.position.start.offset)
 
 				const fileLink = this.app.metadataCache.fileToLinktext(value, this.filePath)
 
@@ -56,9 +57,12 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 					}
 					for (let i = 0; i < headings.length; i++) {
 						const heading = new FileHeader(headings[i])
-						const numIndents = new Array(Math.max(1, heading.level - headings[0].level + (this.plugin.settings.skipFirstHeadline ? 1 : 0)));
-
-						const indent = numIndents.fill("\t").join("");
+						//const numIndents = new Array(Math.max(1, heading.level - headings[0].level + (this.plugin.settings.skipFirstHeadline ? 1 : 0)));
+						let indent = ""
+						for(let j=0; j<heading.level; j++) {
+							indent += "\t"
+						}
+						//const indent = numIndents.fill("\t").join("");
 						list.push(`${indent}1. [[${fileLink}#${heading.rawHeading}|${heading.rawHeading}]]`);
 					}
 				}
