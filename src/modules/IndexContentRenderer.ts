@@ -42,13 +42,13 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 					return
 				}
 
+
 				let headings = this.app.metadataCache.getFileCache(value).headings
-				headings = headings.sort((a, b) => a.position.start.offset - b.position.start.offset)
-
 				const fileLink = this.app.metadataCache.fileToLinktext(value, this.filePath)
-
 				list.push(`1. ${this.plugin.settings.includeFileContent ? '!' : ''}[[${fileLink}|${value.basename}]]`);
+
 				if (headings != null && !this.plugin.settings.disableHeadlines) {
+					headings = headings.sort((a, b) => a.position.start.offset - b.position.start.offset)
 					if (this.plugin.settings.skipFirstHeadline) {
 						headings = headings.slice(1)
 					}
@@ -59,7 +59,7 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 						const heading = new FileHeader(headings[i])
 						//const numIndents = new Array(Math.max(1, heading.level - headings[0].level + (this.plugin.settings.skipFirstHeadline ? 1 : 0)));
 						let indent = ""
-						for(let j=0; j<heading.level; j++) {
+						for (let j = 0; j < heading.level; j++) {
 							indent += "\t"
 						}
 						//const indent = numIndents.fill("\t").join("");
