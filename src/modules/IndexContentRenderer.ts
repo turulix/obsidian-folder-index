@@ -38,7 +38,7 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 
 		filtered_files.forEach(value => {
 			if (value instanceof TFile) {
-				if (value.basename == value.parent.name) {
+				if (value.basename == value.parent.name || value.name == this.plugin.settings.rootIndexFile) {
 					return
 				}
 
