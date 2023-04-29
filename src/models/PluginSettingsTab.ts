@@ -3,7 +3,7 @@ import FolderIndexPlugin from "../main";
 
 export interface PluginSetting {
 	graphOverwrite: boolean;
-	skipFirstHeadline: boolean;
+	//skipFirstHeadline: boolean;
 	disableHeadlines: boolean;
 	rootIndexFile: string;
 	indexFileInitText: string;
@@ -14,10 +14,11 @@ export interface PluginSetting {
 	autoPreviewMode: boolean;
 	sortIndexFilesAlphabetically: boolean;
 	sortHeadersAlphabetically: boolean;
+	recursiveIndexFiles: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
-	skipFirstHeadline: true,
+	//skipFirstHeadline: false,
 	disableHeadlines: false,
 	graphOverwrite: false,
 	rootIndexFile: "Dashboard.md",
@@ -25,10 +26,11 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	autoRenameIndexFile: true,
 	includeFileContent: false,
 	hideIndexFiles: false,
-	indexFileInitText: "---\ntags: MOCs\n---\n\n# MOC: {{folder}}\n\n---\n\n```folder-index-content\n```",
+	indexFileInitText: "---\ntags: MOCs\n```folder-index-content\n```",
 	autoPreviewMode: false,
-	sortIndexFilesAlphabetically: false,
-	sortHeadersAlphabetically: false
+	sortIndexFilesAlphabetically: true,
+	sortHeadersAlphabetically: false,
+	recursiveIndexFiles: false,
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -90,15 +92,6 @@ export class PluginSettingsTab extends PluginSettingTab {
 				}))
 
 		new Setting(containerEl)
-			.setName("Auto include preview")
-			.setDesc("This will automatically include previews when creating index files (!) ")
-			.addToggle((component) => component.setValue(this.plugin.settings.includeFileContent)
-				.onChange(async (value) => {
-					this.plugin.settings.includeFileContent = value;
-					await this.plugin.saveSettings();
-				}));
-
-		new Setting(containerEl)
 			.setName("Automatically Rename IndexFile")
 			.setDesc("This will automatically rename the folders index file as you rename folders")
 			.addToggle(component => component.setValue(this.plugin.settings.autoRenameIndexFile)
@@ -120,15 +113,25 @@ export class PluginSettingsTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', {text: 'Content Renderer Settings'});
 
-		new Setting(containerEl)
-			.setName("Skip First Headline")
-			.setDesc("This will skip the first h1 header to prevent duplicate entries.")
-			.addToggle(component => component.setValue(this.plugin.settings.skipFirstHeadline)
-				.onChange(async (value) => {
-					this.plugin.settings.skipFirstHeadline = value
-					await this.plugin.saveSettings()
-				}))
+		// new Setting(containerEl)
+		// 	.setName("Skip First Headline")
+		// 	.setDesc("This Option should not be used anymore, as Obsidian now shows the Filename itself " +
+		// 		"Which was often the h1 of a file. " +
+		// 		"This will skip the first h1 header to prevent duplicate entries.")
+		// 	.addToggle(component => component.setValue(this.plugin.settings.skipFirstHeadline)
+		// 		.onChange(async (value) => {
+		// 			this.plugin.settings.skipFirstHeadline = value
+		// 			await this.plugin.saveSettings()
+		// 		}))
 
+		new Setting(containerEl)
+			.setName("Auto include preview")
+			.setDesc("This will automatically include previews when creating index files (!) ")
+			.addToggle((component) => component.setValue(this.plugin.settings.includeFileContent)
+				.onChange(async (value) => {
+					this.plugin.settings.includeFileContent = value;
+					await this.plugin.saveSettings();
+				}));
 
 		new Setting(containerEl)
 			.setName("Disable Headlines")
@@ -149,8 +152,8 @@ export class PluginSettingsTab extends PluginSettingTab {
 				}))
 
 		new Setting(containerEl)
-			.setName("Sort Indexfiles Alphabetically")
-			.setDesc("This will sort the Indexfiles alphabetically")
+			.setName("Sort Files Alphabetically")
+			.setDesc("This will sort the Files alphabetically")
 			.addToggle(component => component.setValue(this.plugin.settings.sortIndexFilesAlphabetically)
 				.onChange(async (value) => {
 					this.plugin.settings.sortIndexFilesAlphabetically = value
@@ -165,6 +168,16 @@ export class PluginSettingsTab extends PluginSettingTab {
 					this.plugin.settings.sortHeadersAlphabetically = value
 					await this.plugin.saveSettings()
 				}))
+
+		new Setting(containerEl)
+			.setName("Build IndexFiles Recursively")
+			.setDesc("This will show all files within a folder and its subfolders")
+			.addToggle(component => component.setValue(this.plugin.settings.recursiveIndexFiles)
+				.onChange(async (value) => {
+					this.plugin.settings.recursiveIndexFiles = value
+					await this.plugin.saveSettings()
+				}))
+
 
 	}
 }

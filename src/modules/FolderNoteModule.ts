@@ -3,9 +3,11 @@ import FolderIndexPlugin from "../main";
 
 export class FolderNoteModule {
 	viewModeByPlugin = false;
-	previous_state: ViewState | null = null;
+	previousState: ViewState | null = null;
 
 	constructor(private app: App, private plugin: FolderIndexPlugin) {
+		this.app = app;
+		this.plugin = plugin;
 		this.load()
 	}
 
@@ -130,8 +132,8 @@ export class FolderNoteModule {
 
 	private async onLayoutChange() {
 		try {
-			if (this.previous_state == null) {
-				this.previous_state = this.app.workspace.getLeaf().getViewState()
+			if (this.previousState == null) {
+				this.previousState = this.app.workspace.getLeaf().getViewState()
 			}
 			if (!this.plugin.settings.autoPreviewMode) {
 				return;
@@ -140,12 +142,12 @@ export class FolderNoteModule {
 			const currentState = this.app.workspace.getLeaf().getViewState()
 
 			// We weren't in a markdown file before, so we don't care
-			if (!(currentState.type == "markdown" && this.previous_state.type == "markdown")) {
+			if (!(currentState.type == "markdown" && this.previousState.type == "markdown")) {
 				return;
 			}
 
 			// We didn't change files, so we don't care
-			if (currentState.state.file == this.previous_state.state.file)
+			if (currentState.state.file == this.previousState.state.file)
 				return;
 
 			const currentFile = await this.app.vault.getAbstractFileByPath(currentState.state.file) as TFile
@@ -161,7 +163,7 @@ export class FolderNoteModule {
 			}
 
 			// We are already inside the Preview Mode.
-			if (this.previous_state.state.mode == "preview") {
+			if (this.previousState.state.mode == "preview") {
 				return;
 			} else {
 				currentState.state.mode = "preview"
@@ -171,7 +173,7 @@ export class FolderNoteModule {
 		} finally {
 			const currentState = this.app.workspace.getLeaf().getViewState();
 			if (currentState.type == "markdown")
-				this.previous_state = currentState;
+				this.previousState = currentState;
 		}
 	}
 
