@@ -1,16 +1,30 @@
-import {App, MarkdownRenderChild, MarkdownRenderer, TAbstractFile, TFile, TFolder} from "obsidian";
+import {App, HeadingCache, MarkdownRenderChild, MarkdownRenderer, TAbstractFile, TFile, TFolder} from "obsidian";
 import FolderIndexPlugin from "../main";
-import {FileHeader} from "../models/FileHeader";
-import {PluginSetting} from "../models/PluginSettingsTab";
+
+type FileTree = (TFile | TFolder)[]
+type HeaderWrapper = {
+	header: HeadingCache,
+	parent: HeaderWrapper | null
+	children: HeaderWrapper[]
+}
 
 export class IndexContentRenderer extends MarkdownRenderChild {
 	constructor(private app: App, private plugin: FolderIndexPlugin, private filePath: string, private container: HTMLElement) {
 		super(container)
+		this.app = app
+		this.plugin = plugin
+		this.filePath = filePath
+		this.container = container
 	}
 
 	async onload() {
 		await this.render()
-		this.plugin.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this));
+		this.plugin.eventManager.on("settingsUpdate", this.triggerRerender.bind(this));
+		this.plugin.registerEvent(this.app.vault.on("rename", this.triggerRerender.bind(this)))
+		this.app.workspace.onLayoutReady(() => {
+			this.plugin.registerEvent(this.app.vault.on("create", this.triggerRerender.bind(this)))
+		})
+		this.plugin.registerEvent(this.app.vault.on("delete", this.triggerRerender.bind(this)))
 	}
 
 
@@ -18,58 +32,172 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 		this.plugin.eventManager.off("settingsUpdate", this.onSettingsUpdate.bind(this))
 	}
 
-	public onSettingsUpdate(_settings: PluginSetting) {
+	public onSettingsUpdate() {
+		this.render().then()
+	}
+
+	public triggerRerender() {
 		this.render().then()
 	}
 
 	private async render() {
 		this.container.empty()
-		const parent: TFolder = this.app.vault.getAbstractFileByPath(this.filePath).parent
-		const files = parent.children
-		await MarkdownRenderer.renderMarkdown(this.buildMarkdownText(files), this.container, this.filePath, this)
+		const folder: TAbstractFile = this.app.vault.getAbstractFileByPath(this.filePath)
+		if (folder instanceof TFile) {
+			const files = folder.parent.children
+			await MarkdownRenderer.renderMarkdown(this.buildMarkdownText(files), this.container, this.filePath, this)
+		}
 	}
 
-	private buildMarkdownText(filtered_files: TAbstractFile[]): string {
-		const list: string[] = []
+	private buildMarkdownText(filesInFolder: TAbstractFile[]): string {
+		const fileTree = this.buildFileTree(filesInFolder);
+		return this.buildStructureMarkdownText(fileTree, 0);
+	}
 
-		if (this.plugin.settings.sortIndexFilesAlphabetically) {
-			filtered_files = filtered_files.sort((a, b) => a.name.localeCompare(b.name))
+	private buildStructureMarkdownText(fileTree: FileTree, indentLevel: number): string {
+		let markdownText = ""
+		const indentText = this.buildIndentLevel(indentLevel);
+
+		for (const file of fileTree) {
+			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
+				// Create a deep copy of the children array
+				let children = file.children;
+				const indexFile = this.checkIfFolderHasIndexFile(file.children)
+
+				if (indexFile) {
+					children = file.children.filter((child) => child.path != indexFile.path)
+					markdownText += this.buildContentMarkdownText(indexFile, indentLevel)
+				} else {
+					markdownText += `${indentText}1. ${file.name}\n`
+				}
+				markdownText += this.buildStructureMarkdownText(this.buildFileTree(children), indentLevel + 1)
+			}
+			if (file instanceof TFile) {
+				if (this.checkIfIndexFile(file)) {
+					continue;
+				}
+				markdownText += this.buildContentMarkdownText(file, indentLevel)
+			}
 		}
 
-		filtered_files.forEach(value => {
-			if (value instanceof TFile) {
-				if (value.basename == value.parent.name || value.name == this.plugin.settings.rootIndexFile) {
-					return
-				}
+		return markdownText
+	}
+
+	private buildContentMarkdownText(file: TFile, indentLevel: number): string {
+		let markdownText = ""
+		const indentText = this.buildIndentLevel(indentLevel)
+
+		markdownText += `${indentText}1. ${this.plugin.settings.includeFileContent ? '!' : ''}[${file.basename}](${encodeURI(file.path)})\n`;
+
+		const headers: HeadingCache[] | null = this.app.metadataCache.getFileCache(file)?.headings
+		if (headers && !this.plugin.settings.disableHeadlines) {
+			const headerTree = this.buildHeaderTree(headers)
+			markdownText += this.buildHeaderMarkdownText(file, headerTree, indentLevel + 1)
+		}
+
+		return markdownText
+	}
+
+	private buildHeaderMarkdownText(file: TFile, headerTree: HeaderWrapper[], indentLevel: number): string {
+		let markdownText = ""
+		const indentText = this.buildIndentLevel(indentLevel)
+
+		if (this.plugin.settings.sortHeadersAlphabetically) {
+			headerTree.sort((a, b) => a.header.heading.localeCompare(b.header.heading))
+		}
+
+		for (const headerWrapper of headerTree) {
+			markdownText += `${indentText}1. [${headerWrapper.header.heading}](${encodeURI(file.path)}${this.buildHeaderChain(headerWrapper)})\n`
+			markdownText += this.buildHeaderMarkdownText(file, headerWrapper.children, indentLevel + 1)
+		}
+
+		return markdownText
+	}
+
+	private buildHeaderChain(header: HeaderWrapper): string {
+		if (header.parent) {
+			return `${this.buildHeaderChain(header.parent)}#${encodeURI(header.header.heading)}`
+		}
+		return `#${encodeURI(header.header.heading)}`
+	}
 
 
-				let headings = this.app.metadataCache.getFileCache(value).headings
-				const fileLink = this.app.metadataCache.fileToLinktext(value, this.filePath)
-				list.push(`1. ${this.plugin.settings.includeFileContent ? '!' : ''}[[${fileLink}|${value.basename}]]`);
+	private checkIfIndexFile(file: TFile): boolean {
+		return file.basename == file.parent.name || file.name == this.plugin.settings.rootIndexFile;
+	}
 
-				if (headings != null && !this.plugin.settings.disableHeadlines) {
-					headings = headings.sort((a, b) => a.position.start.offset - b.position.start.offset)
-					if (this.plugin.settings.skipFirstHeadline) {
-						headings = headings.slice(1)
-					}
-					if (this.plugin.settings.sortHeadersAlphabetically) {
-						headings = headings.sort((a, b) => a.heading.localeCompare(b.heading))
-					}
-					for (let i = 0; i < headings.length; i++) {
-						const heading = new FileHeader(headings[i])
-						//const numIndents = new Array(Math.max(1, heading.level - headings[0].level + (this.plugin.settings.skipFirstHeadline ? 1 : 0)));
-						let indent = ""
-						for (let j = 0; j < heading.level; j++) {
-							indent += "\t"
-						}
-						//const indent = numIndents.fill("\t").join("");
-						list.push(`${indent}1. [[${fileLink}#${heading.rawHeading}|${heading.rawHeading}]]`);
-					}
+	private checkIfFolderHasIndexFile(children: TAbstractFile[]): TFile | null {
+		for (const file of children) {
+			if (file instanceof TFile) {
+				if (this.checkIfIndexFile(file)) {
+					return file
 				}
 			}
-
-		})
-
-		return list.join("\n")
+		}
+		return null
 	}
+
+	private buildHeaderTree(headers: HeadingCache[]): HeaderWrapper[] {
+		const headerTree: HeaderWrapper[] = []
+		for (let i = 0; i < headers.length; i++) {
+			if (headers[i].level == 1) {
+				const wrappedHeader = {
+					parent: null,
+					header: headers[i],
+					children: [],
+				} as HeaderWrapper
+				wrappedHeader.children = this.getHeaderChildren(headers, i + 1, wrappedHeader)
+				headerTree.push(wrappedHeader)
+			}
+		}
+		return headerTree
+	}
+
+	// Gets all headers that are children of the parentHeader
+	private getHeaderChildren(headers: HeadingCache[], startIndex: number, parentHeader: HeaderWrapper) {
+		const children: HeaderWrapper[] = []
+		if (startIndex > headers.length) {
+			return children
+		}
+		for (let i = startIndex; i < headers.length; i++) {
+			if (headers[i].level <= parentHeader.header.level) {
+				return children
+			}
+			if (headers[i].level == parentHeader.header.level + 1) {
+				const wrappedHeader = {
+					parent: parentHeader,
+					header: headers[i],
+					children: [],
+				} as HeaderWrapper
+				wrappedHeader.children = this.getHeaderChildren(headers, i + 1, wrappedHeader)
+				children.push(wrappedHeader)
+			}
+		}
+		return children
+	}
+
+	private buildFileTree(filesInFolder: TAbstractFile[]): FileTree {
+		const fileTree: FileTree = [];
+		for (const file of filesInFolder) {
+			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
+				fileTree.push(file)
+			}
+			if (file instanceof TFile) {
+				fileTree.push(file)
+			}
+		}
+		if (this.plugin.settings.sortIndexFilesAlphabetically) {
+			fileTree.sort((a, b) => a.name.localeCompare(b.name))
+		}
+		return fileTree
+	}
+
+	private buildIndentLevel(indentLevel: number): string {
+		let indentText = ""
+		for (let j = 0; j < indentLevel; j++) {
+			indentText += "\t"
+		}
+		return indentText
+	}
+
 }

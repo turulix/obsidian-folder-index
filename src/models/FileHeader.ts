@@ -3,6 +3,7 @@ import {HeadingCache} from "obsidian";
 // TODO refactor this
 export class FileHeader {
 	constructor(private cached: HeadingCache) {
+		this.cached = cached;
 	}
 
 	get level(): number {
