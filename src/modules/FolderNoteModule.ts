@@ -1,13 +1,9 @@
-import {App, Notice, TAbstractFile, TFile, TFolder} from "obsidian";
+import {App, Notice, TAbstractFile, TFile, TFolder, ViewState} from "obsidian";
 import FolderIndexPlugin from "../main";
-import {PluginSetting} from "../models/PluginSettingsTab";
 
-
-// This one is inspired by xpgo's FolderNote
-// https://github.com/xpgo/obsidian-folder-note-plugin
 export class FolderNoteModule {
-	state_by_plugin = false;
-	previous_file: TFile | null = null
+	viewModeByPlugin = false;
+	previous_state: ViewState | null = null;
 
 	constructor(private app: App, private plugin: FolderIndexPlugin) {
 		this.load()
@@ -16,175 +12,172 @@ export class FolderNoteModule {
 	load() {
 		// Apparently loading the vault also triggers the create event. So we just wait till everything is ready
 		this.app.workspace.onLayoutReady(() => {
-			this.plugin.registerEvent(this.app.vault.on("create", this.onFileCreate.bind(this)))
+			this.plugin.registerEvent(this.app.vault.on("create", this.onCreate.bind(this)))
 		})
 
-		this.plugin.registerEvent(this.app.vault.on("rename", this.onFileRename.bind(this)))
-		this.plugin.eventManager.on("fileExplorerFolderClick", this.onFolderClick.bind(this))
-		this.plugin.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this))
-		this.plugin.eventManager.on("onLayoutChange", this.onLayoutChange.bind(this))
+		this.plugin.registerEvent(this.app.workspace.on("layout-change", this.onLayoutChange.bind(this)))
 
-		this.plugin.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			let folderPath = '';
-			let folderName = '';
-
-			if (!(evt.target instanceof HTMLElement)) {
-				return
-			}
-
-			const elemTarget = (evt.target as HTMLElement)
-			let folderElem = elemTarget;
-
-			const className = elemTarget.className.toString();
-			if (elemTarget.parentElement.className.contains("mod-root"))
-				return;
-			if (elemTarget.parentElement.parentElement.className.contains("mod-root"))
-				return;
-			if (className.contains('nav-folder-title-content')) {
-				folderName = folderElem.getText();
-				folderElem = elemTarget.parentElement;
-				folderPath = folderElem.attributes.getNamedItem('data-path').textContent;
-				this.plugin.eventManager.emit("fileExplorerFolderClick", elemTarget, folderPath, folderName)
-			} else if (className.contains('nav-folder-title')) {
-				folderPath = elemTarget.attributes.getNamedItem('data-path').textContent;
-				folderName = elemTarget.lastElementChild.getText();
-				this.plugin.eventManager.emit("fileExplorerFolderClick", elemTarget, folderPath, folderName)
-			}
-		})
-
-		if (this.plugin.settings.hideIndexFiles) {
-			FolderNoteModule.hideAllIndexFiles()
-		}
+		this.plugin.registerDomEvent(document, "click", this.onClick.bind(this))
+		this.plugin.registerEvent(this.app.vault.on("rename", this.onRename.bind(this)))
 	}
 
 	unload() {
-		this.plugin.eventManager.off("fileExplorerFolderClick", this.onFolderClick.bind(this))
-		FolderNoteModule.showAllIndexFiles()
+		// this.plugin.eventManager.off("fileExplorerFolderClick", this.onFolderClick.bind(this))
+		// FolderNoteModule.showAllIndexFiles()
 	}
 
-	private async onLayoutChange() {
-		if (!this.plugin.settings.autoPreviewMode) {
+	private async onClick(event: MouseEvent) {
+		if (!(event.target instanceof HTMLElement)) {
+			return
+		}
+		// We only want to handle clicks on the folders in the file explorer
+		let target = event.target as HTMLElement
+		if (!target.matches(".nav-folder-title, .nav-folder-title-content"))
+			return
+		// If the user clicked on the content of the folder, we need to get the parent element
+		if (target.classList.contains("nav-folder-title-content")) {
+			target = event.target.parentElement
+		}
+
+		// Get the path of the clicked folder
+		const dataPathAttribute = target.attributes.getNamedItem("data-path")
+		let dataPath: string
+		if (dataPathAttribute == null) {
+			return
+		} else {
+			dataPath = dataPathAttribute.value
+		}
+
+		const folderName = dataPath.split("/").pop()
+		let indexFilePath = dataPath + "/" + folderName + ".md"
+
+		// This is the root folder, so we open the root index file
+		if (indexFilePath == "//.md") {
+			indexFilePath = this.plugin.settings.rootIndexFile
+		}
+
+		// Create the File if it doesn't exist and open it
+		if (!this.doesFileExist(indexFilePath)) {
+			if (await this.createIndexFile(indexFilePath)) {
+				await this.openIndexFile(indexFilePath)
+			}
+		} else {
+			await this.openIndexFile(indexFilePath)
+		}
+	}
+
+	private doesFileExist(path: string) {
+		return this.app.vault.getAbstractFileByPath(path) != null
+	}
+
+	private async openIndexFile(path: string) {
+		const file = this.app.vault.getAbstractFileByPath(path)
+		if (file instanceof TFile) {
+			await this.app.workspace.getLeaf().openFile(file)
+		}
+	}
+
+	private async createIndexFile(path: string) {
+		if (this.plugin.settings.autoCreateIndexFile) {
+			const name = path.split(/\//).last()
+			try {
+				const file = await this.app.vault.create(path, this.plugin.settings.indexFileInitText.replace("{{folder}}", name))
+				new Notice(`Created index file ${file.basename}`)
+				return true
+			} catch (e) {
+				new Notice(`Failed to create index file ${name}`)
+			}
+		}
+		return false
+	}
+
+	private async onRename(file: TAbstractFile, oldPath: string) {
+
+		if (!this.plugin.settings.autoRenameIndexFile) {
+			return
+		}
+		// We don't care if a file was renamed.
+		if (file instanceof TFile) {
+			return
+		}
+		// The File is a folder within the renamed Folder, so we don't care.
+		if (oldPath.split("/").pop() == file.name) {
 			return;
 		}
 
-		const current_file = await this.app.workspace.getActiveFile()
-		if (this.previous_file == null) {
-			this.previous_file = current_file
+		const oldIndexFileName = oldPath.split("/").pop()
+
+		// The Folder didn't contain an index file, so we don't care.
+		// Obsidian is slow, so this still the Path at this time.
+		if (!this.doesFileExist(`${oldPath}/${oldIndexFileName}.md`))
+			return
+
+		// The Folder contained an index file, so we need to rename it.
+
+		const oldIndexFile = this.app.vault.getAbstractFileByPath(`${oldPath}/${oldIndexFileName}.md`) as TFile
+
+		// Since windows already renamed the folder but Obsidian just hasn't updated yet, we need to change the path manually
+		oldIndexFile.path = `${file.path}/${oldIndexFileName}.md`
+		try {
+			await this.app.vault.rename(oldIndexFile, `${file.path}/${file.name}.md`)
+			new Notice(`Renamed index file ${oldIndexFileName} to ${file.name}`)
+		} catch (e) {
+			new Notice(`Failed to rename index file ${oldIndexFileName} to ${file.name}. ${file.name} will be used as the index file.`)
 		}
-		if (current_file.path != this.previous_file.path) {
-			// File Changed. We need to check if the file is a folder note and change mode if needed
-			const is_index_file = current_file.basename == current_file.parent.name
-			const state = this.app.workspace.getLeaf().getViewState()
-			if (is_index_file) {
-				//Swap to preview mode.
-				state.state.mode = "preview"
-				await this.app.workspace.getLeaf().setViewState(state)
-				this.state_by_plugin = true
+
+
+	}
+
+	private async onLayoutChange() {
+		try {
+			if (this.previous_state == null) {
+				this.previous_state = this.app.workspace.getLeaf().getViewState()
+			}
+			if (!this.plugin.settings.autoPreviewMode) {
+				return;
+			}
+
+			const currentState = this.app.workspace.getLeaf().getViewState()
+
+			// We weren't in a markdown file before, so we don't care
+			if (!(currentState.type == "markdown" && this.previous_state.type == "markdown")) {
+				return;
+			}
+
+			// We didn't change files, so we don't care
+			if (currentState.state.file == this.previous_state.state.file)
+				return;
+
+			const currentFile = await this.app.vault.getAbstractFileByPath(currentState.state.file) as TFile
+
+			// We did not open an index file, so we need to check if the previous mode was set by this plugin
+			if (currentFile.basename != currentFile.parent.name && currentFile.name != this.plugin.settings.rootIndexFile) {
+				if (this.viewModeByPlugin) {
+					this.viewModeByPlugin = false
+					currentState.state.mode = "source"
+					await this.app.workspace.getLeaf().setViewState(currentState)
+				}
+				return;
+			}
+
+			// We are already inside the Preview Mode.
+			if (this.previous_state.state.mode == "preview") {
+				return;
 			} else {
-				if (this.state_by_plugin) {
-					//Swap back to edit mode
-					state.state.mode = "source"
-					await this.app.workspace.getLeaf().setViewState(state)
-					this.state_by_plugin = false
-				}
+				currentState.state.mode = "preview"
+				this.viewModeByPlugin = true
+				await this.app.workspace.getLeaf().setViewState(currentState)
 			}
-		}
-		this.previous_file = current_file
-	}
-
-	private async onSettingsUpdate(_settings: PluginSetting) {
-		if (!this.plugin.settings.hideIndexFiles) {
-			FolderNoteModule.showAllIndexFiles()
-		} else {
-			FolderNoteModule.hideAllIndexFiles()
+		} finally {
+			const currentState = this.app.workspace.getLeaf().getViewState();
+			if (currentState.type == "markdown")
+				this.previous_state = currentState;
 		}
 	}
 
-	private static hideAllIndexFiles() {
-		const modRoot = document.getElementsByClassName("nav-folder mod-root")[0]
-		const allFiles = modRoot.getElementsByClassName("nav-file")
-		for (let i = allFiles.length - 1; i >= 0; i--) {
-			const file = allFiles[i]
-			const dataPath = file.getElementsByClassName("nav-file-title")[0].getAttribute("data-path")
-			const pathParts = dataPath.split(/\//)
-			const parentFolder = pathParts.at(-2)
-			if (parentFolder + ".md" == pathParts.at(-1)) {
-				file.addClass("hide-index-folder-note")
-			}
-		}
-	}
-
-	private static showAllIndexFiles() {
-		/*		const hiddenDocuments = document.getElementsByClassName("hide-index-folder-note")
-				for (let i = hiddenDocuments.length - 1; i >= 0; i--) {
-					hiddenDocuments[i].removeClass("hide-index-folder-note")
-				}*/
-	}
-
-	private async onFolderClick(_target: Element, path: string, name: string) {
-		//console.log("Path: " + path + " | Name: " + name)
-		let indexFile = this.app.vault.getAbstractFileByPath(path + "/" + name + ".md") as TFile
-		if (indexFile != null) {
-			await this.app.workspace.getLeaf().openFile(indexFile)
-		} else if (this.plugin.settings.autoCreateIndexFile) {
-			indexFile = await this.createIndexFile(path, name)
-			new Notice("Created IndexFile for: " + name)
-			await this.app.workspace.getLeaf().openFile(indexFile)
-		}
-
-		if (this.plugin.settings.hideIndexFiles) {
-			FolderNoteModule.hideAllIndexFiles()
-		} else {
-			FolderNoteModule.showAllIndexFiles()
-		}
-	}
-
-	private async createIndexFile(path: string, name: string) {
-		return await this.app.vault.create(`${path}/${name}.md`, this.plugin.settings.indexFileInitText.replace("{{folder}}", name))
-	}
-
-	private async onFileCreate(file: TAbstractFile) {
+	private async onCreate(file: TAbstractFile) {
 		if (file instanceof TFolder) {
-			if (this.plugin.settings.autoCreateIndexFile) {
-				await this.createIndexFile(file.path, file.name)
-				new Notice("Created IndexFile for: " + file.name)
-			}
-		}
-	}
-
-	private async onFileRename(file: TAbstractFile, oldPath: string) {
-		if (file instanceof TFolder && this.plugin.settings.autoRenameIndexFile) {
-			const indexFile = file.children.find(value => {
-				return value instanceof TFile && value.basename == oldPath.split(/\//).last();
-			}) as TFile | null
-
-			if (indexFile == null) {
-				if (this.plugin.settings.autoCreateIndexFile) {
-					await this.createIndexFile(file.path, file.name + ".md")
-					return
-				} else {
-					return
-				}
-			}
-
-			if (indexFile.basename == file.name) {
-				return
-			}
-
-			// We are too fast. Have to update the path our self lol :D
-			indexFile.path = file.path + "/" + indexFile.name
-			const newFilePath = file.path + "/" + file.name + "." + indexFile.extension
-
-			const conflictingFile = file.children.find(value => {
-				return value instanceof TFile && value.basename == file.name;
-			})
-
-			if (conflictingFile != null) {
-				new Notice(`Could not Automatically rename IndexFile because there already is a file with this name! This file will now be used!`)
-				return
-			}
-
-			await this.app.fileManager.renameFile(indexFile, newFilePath)
+			await this.createIndexFile(`${file.path}/${file.name}.md`)
 		}
 	}
 }
