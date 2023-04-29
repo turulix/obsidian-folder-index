@@ -32,14 +32,30 @@ export class FolderNoteModule {
 		if (!(event.target instanceof HTMLElement)) {
 			return
 		}
-		// We only want to handle clicks on the folders in the file explorer
 		let target = event.target as HTMLElement
-		if (!target.matches(".nav-folder-title, .nav-folder-title-content"))
-			return
-		// If the user clicked on the content of the folder, we need to get the parent element
-		if (target.classList.contains("nav-folder-title-content")) {
-			target = event.target.parentElement
+		// @ts-ignore - This is a hack to get the active plugins.
+		const activePlugins: Set = this.app.plugins.enabledPlugins
+
+		// Compatibility with https://github.com/ozntel/file-tree-alternative
+		if (activePlugins.has("file-tree-alternative")) {
+			if (!target.matches(".oz-folder-name, .oz-folder-block"))
+				return
+			if (target.classList.contains("oz-folder-name")) {
+				target = target.parentElement
+			}
+			if (target.classList.contains("oz-folder-block")) {
+				target = target.parentElement.parentElement
+			}
+		} else {
+			// We only want to handle clicks on the folders in the file explorer
+			if (!target.matches(".nav-folder-title, .nav-folder-title-content"))
+				return
+			// If the user clicked on the content of the folder, we need to get the parent element
+			if (target.classList.contains("nav-folder-title-content")) {
+				target = event.target.parentElement
+			}
 		}
+
 
 		// Get the path of the clicked folder
 		const dataPathAttribute = target.attributes.getNamedItem("data-path")
