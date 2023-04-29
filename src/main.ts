@@ -16,6 +16,7 @@ export default class FolderIndexPlugin extends Plugin {
 	oldGraphSetting = false
 
 	async onload() {
+		// eslint-disable-next-line no-console
 		console.log("Loading FolderTableContent")
 		this.eventManager = new EventEmitter()
 
@@ -62,6 +63,7 @@ export default class FolderIndexPlugin extends Plugin {
 	}
 
 	async onunload() {
+		// eslint-disable-next-line no-console
 		console.log("Unloading FolderTableContent")
 		this.eventManager.removeAllListeners()
 		if (this.graphManipulator != null) {

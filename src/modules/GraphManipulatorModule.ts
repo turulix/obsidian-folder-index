@@ -26,6 +26,8 @@ export class GraphManipulatorModule {
 	private oldGraphOverwrite: boolean
 
 	constructor(private app: App, private plugin: FolderIndexPlugin) {
+		this.app = app
+		this.plugin = plugin
 		this.load()
 	}
 
@@ -223,9 +225,11 @@ export class GraphManipulatorModule {
 			const searchQueries = engine.searchQueries
 			const engineOptions = engine.options
 			const fileFilter = engine.fileFilter
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			return !searchQueries || ("" === nodeType ? filePath === engineOptions.localFile || (fileFilter.hasOwnProperty(filePath) ? fileFilter[filePath] : !engine.hasFilter) : "tag" === nodeType ? searchQueries.every((function (e: any) {
 					return !!e.color || !!e.query.matchTag(filePath)
 				}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			)) : "attachment" !== nodeType || searchQueries.every((function (e: any) {
 					return !!e.color || !!e.query.matchFilepath(filePath)
 				}
