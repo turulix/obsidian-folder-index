@@ -26,7 +26,7 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	autoRenameIndexFile: true,
 	includeFileContent: false,
 	hideIndexFiles: false,
-	indexFileInitText: "---\ntags: MOCs\n```folder-index-content\n```",
+	indexFileInitText: "---\ntags: MOCs\n---\n```folder-index-content\n```",
 	autoPreviewMode: false,
 	sortIndexFilesAlphabetically: true,
 	sortHeadersAlphabetically: false,
