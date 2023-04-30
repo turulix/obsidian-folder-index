@@ -1,5 +1,6 @@
 import {App, Notice, TAbstractFile, TFile, TFolder, ViewState} from "obsidian";
 import FolderIndexPlugin from "../main";
+import {isExcludedPath, isIndexFile} from "../types/Utilities";
 
 export class FolderNoteModule {
 	viewModeByPlugin = false;
@@ -89,11 +90,8 @@ export class FolderNoteModule {
 	}
 
 	private async openIndexFile(path: string) {
-		const pathParts = path.split(/\//)
-		for (const excludedFolder of this.plugin.settings.excludeFolders) {
-			const folder = pathParts.slice(0, pathParts.length - 1).join("/")
-			if (RegExp(`^${excludedFolder}$`).test(folder))
-				return;
+		if (!isIndexFile(path)) {
+			return
 		}
 
 		const file = this.app.vault.getAbstractFileByPath(path)
@@ -103,12 +101,8 @@ export class FolderNoteModule {
 	}
 
 	private async createIndexFile(path: string) {
-		const pathParts = path.split(/\//)
-		for (const excludedFolder of this.plugin.settings.excludeFolders) {
-			const folder = pathParts.slice(0, pathParts.length - 1).join("/")
-			if (RegExp(`^${excludedFolder}$`).test(folder))
-				return false
-		}
+		if (isExcludedPath(path))
+			return false
 		if (this.plugin.settings.autoCreateIndexFile) {
 			const name = path.split(/\//).last()
 			try {
@@ -146,9 +140,13 @@ export class FolderNoteModule {
 		// The Folder contained an index file, so we need to rename it.
 
 		const oldIndexFile = this.app.vault.getAbstractFileByPath(`${oldPath}/${oldIndexFileName}.md`) as TFile
+		if (!isIndexFile(oldIndexFile.path))
+			return
 
-		// Since windows already renamed the folder but Obsidian just hasn't updated yet, we need to change the path manually
+		// Since the OS already renamed the folder but Obsidian just hasn't updated yet, we need to change the path manually
 		oldIndexFile.path = `${file.path}/${oldIndexFileName}.md`
+
+
 		try {
 			await this.app.vault.rename(oldIndexFile, `${file.path}/${file.name}.md`)
 			new Notice(`Renamed index file ${oldIndexFileName} to ${file.name}`)
@@ -182,7 +180,7 @@ export class FolderNoteModule {
 			const currentFile = await this.app.vault.getAbstractFileByPath(currentState.state.file) as TFile
 
 			// We did not open an index file, so we need to check if the previous mode was set by this plugin
-			if (currentFile.basename != currentFile.parent.name && currentFile.name != this.plugin.settings.rootIndexFile) {
+			if (!isIndexFile(currentFile.path)) {
 				if (this.viewModeByPlugin) {
 					this.viewModeByPlugin = false
 					currentState.state.mode = "source"

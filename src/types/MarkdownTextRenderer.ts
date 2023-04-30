@@ -1,5 +1,6 @@
-import {App, HeadingCache, MarkdownRenderChild, MarkdownRenderer, TAbstractFile, TFile, TFolder} from "obsidian";
+import {App, HeadingCache, TAbstractFile, TFile, TFolder} from "obsidian";
 import FolderIndexPlugin from "../main";
+import {isIndexFile} from "./Utilities";
 
 type FileTree = (TFile | TFolder)[]
 type HeaderWrapper = {
@@ -8,48 +9,13 @@ type HeaderWrapper = {
 	children: HeaderWrapper[]
 }
 
-export class IndexContentRenderer extends MarkdownRenderChild {
-	constructor(private app: App, private plugin: FolderIndexPlugin, private filePath: string, private container: HTMLElement) {
-		super(container)
-		this.app = app
+export class MarkdownTextRenderer {
+	constructor(private plugin: FolderIndexPlugin, private app: App) {
 		this.plugin = plugin
-		this.filePath = filePath
-		this.container = container
+		this.app = app
 	}
 
-	async onload() {
-		await this.render()
-		this.plugin.eventManager.on("settingsUpdate", this.triggerRerender.bind(this));
-		this.plugin.registerEvent(this.app.vault.on("rename", this.triggerRerender.bind(this)))
-		this.app.workspace.onLayoutReady(() => {
-			this.plugin.registerEvent(this.app.vault.on("create", this.triggerRerender.bind(this)))
-		})
-		this.plugin.registerEvent(this.app.vault.on("delete", this.triggerRerender.bind(this)))
-	}
-
-
-	async onunload() {
-		this.plugin.eventManager.off("settingsUpdate", this.onSettingsUpdate.bind(this))
-	}
-
-	public onSettingsUpdate() {
-		this.render().then()
-	}
-
-	public triggerRerender() {
-		this.render().then()
-	}
-
-	private async render() {
-		this.container.empty()
-		const folder: TAbstractFile = this.app.vault.getAbstractFileByPath(this.filePath)
-		if (folder instanceof TFile) {
-			const files = folder.parent.children
-			await MarkdownRenderer.renderMarkdown(this.buildMarkdownText(files), this.container, this.filePath, this)
-		}
-	}
-
-	private buildMarkdownText(filesInFolder: TAbstractFile[]): string {
+	public buildMarkdownText(filesInFolder: TAbstractFile[]): string {
 		const fileTree = this.buildFileTree(filesInFolder);
 		return this.buildStructureMarkdownText(fileTree, 0);
 	}
@@ -72,7 +38,7 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 				markdownText += this.buildStructureMarkdownText(this.buildFileTree(children), indentLevel + 1)
 			}
 			if (file instanceof TFile) {
-				if (this.checkIfIndexFile(file)) {
+				if (isIndexFile(file.path)) {
 					continue;
 				}
 				markdownText += this.buildContentMarkdownText(file, indentLevel)
@@ -119,7 +85,7 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 		const settings = this.plugin.settings
 		const symbol = settings.useBulletPoints ? "-" : "1."
 		let link = `${indentText}${symbol} ${settings.includeFileContent ? "!" : ""}`
-		if(isFolder) {
+		if (isFolder) {
 			if (settings.renderFolderItalic) {
 				name = `*${name}*`
 			}
@@ -145,14 +111,10 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 	}
 
 
-	private checkIfIndexFile(file: TFile): boolean {
-		return file.basename == file.parent.name || file.name == this.plugin.settings.rootIndexFile;
-	}
-
 	private checkIfFolderHasIndexFile(children: TAbstractFile[]): TFile | null {
 		for (const file of children) {
 			if (file instanceof TFile) {
-				if (this.checkIfIndexFile(file)) {
+				if (isIndexFile(file.path)) {
 					return file
 				}
 			}
@@ -222,5 +184,4 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 		}
 		return indentText
 	}
-
 }

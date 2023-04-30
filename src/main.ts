@@ -1,19 +1,24 @@
-import {Plugin} from 'obsidian';
-import {IndexContentRenderer} from "./modules/IndexContentRenderer";
+import {App, Plugin, PluginManifest} from 'obsidian';
+import {IndexContentProcessorModule} from "./modules/IndexContentProcessorModule";
 import {GraphManipulatorModule} from "./modules/GraphManipulatorModule";
 import {EventEmitter} from "events";
 import {DEFAULT_SETTINGS, PluginSetting, PluginSettingsTab} from "./models/PluginSettingsTab";
 import {FolderNoteModule} from "./modules/FolderNoteModule";
 
 // Remember to rename these classes and interfaces!
-
-
 export default class FolderIndexPlugin extends Plugin {
 	settings: PluginSetting;
 	graphManipulator: GraphManipulatorModule | null;
 	folderNodeModule: FolderNoteModule;
 	eventManager: EventEmitter
 	oldGraphSetting = false
+	static PLUGIN: FolderIndexPlugin;
+
+
+	constructor(app: App, manifest: PluginManifest) {
+		super(app, manifest);
+		FolderIndexPlugin.PLUGIN = this;
+	}
 
 	async onload() {
 		// eslint-disable-next-line no-console
@@ -34,7 +39,7 @@ export default class FolderIndexPlugin extends Plugin {
 		this.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this))
 
 		this.registerMarkdownCodeBlockProcessor("folder-index-content", (source, el, ctx) => {
-			ctx.addChild(new IndexContentRenderer(this.app, this, ctx.sourcePath, el))
+			ctx.addChild(new IndexContentProcessorModule(this.app, this, ctx.sourcePath, el))
 		})
 
 		this.folderNodeModule = new FolderNoteModule(this.app, this)
