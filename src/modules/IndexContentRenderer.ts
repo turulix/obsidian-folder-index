@@ -65,9 +65,9 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 
 				if (indexFile) {
 					children = file.children.filter((child) => child.path != indexFile.path)
-					markdownText += this.buildContentMarkdownText(indexFile, indentLevel)
+					markdownText += this.buildContentMarkdownText(indexFile, indentLevel, true)
 				} else {
-					markdownText += this.buildMarkdownLinkString(file.name, null, indentLevel)
+					markdownText += this.buildMarkdownLinkString(file.name, null, indentLevel, true)
 				}
 				markdownText += this.buildStructureMarkdownText(this.buildFileTree(children), indentLevel + 1)
 			}
@@ -82,9 +82,9 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 		return markdownText
 	}
 
-	private buildContentMarkdownText(file: TFile, indentLevel: number): string {
+	private buildContentMarkdownText(file: TFile, indentLevel: number, isFolder = false): string {
 		let markdownText = ""
-		markdownText += this.buildMarkdownLinkString(file.basename, encodeURI(file.path), indentLevel)
+		markdownText += this.buildMarkdownLinkString(file.basename, encodeURI(file.path), indentLevel, isFolder)
 
 		const headers: HeadingCache[] | null = this.app.metadataCache.getFileCache(file)?.headings
 		if (headers && !this.plugin.settings.disableHeadlines) {
@@ -114,17 +114,18 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 		return markdownText
 	}
 
-	private buildMarkdownLinkString(name: string, path: string | null, indentLevel: number): string {
+	private buildMarkdownLinkString(name: string, path: string | null, indentLevel: number, isFolder = false): string {
 		const indentText = this.buildIndentLevel(indentLevel)
 		const settings = this.plugin.settings
 		const symbol = settings.useBulletPoints ? "-" : "1."
 		let link = `${indentText}${symbol} ${settings.includeFileContent ? "!" : ""}`
-
-		if (settings.renderFolderItalic) {
-			name = `*${name}*`
-		}
-		if (settings.renderFolderBold) {
-			name = `**${name}**`
+		if(isFolder) {
+			if (settings.renderFolderItalic) {
+				name = `*${name}*`
+			}
+			if (settings.renderFolderBold) {
+				name = `**${name}**`
+			}
 		}
 
 		if (path) {
