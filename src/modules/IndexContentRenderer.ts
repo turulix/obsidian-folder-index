@@ -56,7 +56,6 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 
 	private buildStructureMarkdownText(fileTree: FileTree, indentLevel: number): string {
 		let markdownText = ""
-		const indentText = this.buildIndentLevel(indentLevel);
 
 		for (const file of fileTree) {
 			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
@@ -68,7 +67,7 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 					children = file.children.filter((child) => child.path != indexFile.path)
 					markdownText += this.buildContentMarkdownText(indexFile, indentLevel)
 				} else {
-					markdownText += `${indentText}1. ${file.name}\n`
+					markdownText += this.buildMarkdownLinkString(file.name, null, indentLevel)
 				}
 				markdownText += this.buildStructureMarkdownText(this.buildFileTree(children), indentLevel + 1)
 			}
@@ -85,9 +84,7 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 
 	private buildContentMarkdownText(file: TFile, indentLevel: number): string {
 		let markdownText = ""
-		const indentText = this.buildIndentLevel(indentLevel)
-
-		markdownText += `${indentText}1. ${this.plugin.settings.includeFileContent ? '!' : ''}[${file.basename}](${encodeURI(file.path)})\n`;
+		markdownText += this.buildMarkdownLinkString(file.basename, encodeURI(file.path), indentLevel)
 
 		const headers: HeadingCache[] | null = this.app.metadataCache.getFileCache(file)?.headings
 		if (headers && !this.plugin.settings.disableHeadlines) {
@@ -100,18 +97,43 @@ export class IndexContentRenderer extends MarkdownRenderChild {
 
 	private buildHeaderMarkdownText(file: TFile, headerTree: HeaderWrapper[], indentLevel: number): string {
 		let markdownText = ""
-		const indentText = this.buildIndentLevel(indentLevel)
 
 		if (this.plugin.settings.sortHeadersAlphabetically) {
 			headerTree.sort((a, b) => a.header.heading.localeCompare(b.header.heading))
 		}
 
 		for (const headerWrapper of headerTree) {
-			markdownText += `${indentText}1. [${headerWrapper.header.heading}](${encodeURI(file.path)}${this.buildHeaderChain(headerWrapper)})\n`
+			markdownText += this.buildMarkdownLinkString(
+				headerWrapper.header.heading,
+				encodeURI(file.path) + this.buildHeaderChain(headerWrapper),
+				indentLevel
+			)
 			markdownText += this.buildHeaderMarkdownText(file, headerWrapper.children, indentLevel + 1)
 		}
 
 		return markdownText
+	}
+
+	private buildMarkdownLinkString(name: string, path: string | null, indentLevel: number): string {
+		const indentText = this.buildIndentLevel(indentLevel)
+		const settings = this.plugin.settings
+		const symbol = settings.useBulletPoints ? "-" : "1."
+		let link = `${indentText}${symbol} ${settings.includeFileContent ? "!" : ""}`
+
+		if (settings.renderFolderItalic) {
+			name = `*${name}*`
+		}
+		if (settings.renderFolderBold) {
+			name = `**${name}**`
+		}
+
+		if (path) {
+			link += `[${name}](${path})\n`
+		} else {
+			link += `${name}\n`
+		}
+
+		return link
 	}
 
 	private buildHeaderChain(header: HeaderWrapper): string {

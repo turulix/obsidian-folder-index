@@ -15,6 +15,9 @@ export interface PluginSetting {
 	sortIndexFilesAlphabetically: boolean;
 	sortHeadersAlphabetically: boolean;
 	recursiveIndexFiles: boolean;
+	renderFolderBold: boolean;
+	renderFolderItalic: boolean;
+	useBulletPoints: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -31,6 +34,9 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	sortIndexFilesAlphabetically: true,
 	sortHeadersAlphabetically: false,
 	recursiveIndexFiles: false,
+	renderFolderBold: true,
+	renderFolderItalic: false,
+	useBulletPoints: false
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -178,6 +184,32 @@ export class PluginSettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings()
 				}))
 
+		new Setting(containerEl)
+			.setName("Render Folders Bold")
+			.setDesc("This will render folders in **bold**")
+			.addToggle(component => component.setValue(this.plugin.settings.renderFolderBold)
+				.onChange(async (value) => {
+					this.plugin.settings.renderFolderBold = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Render Folder Italic")
+			.setDesc("This will render folders in *italic*")
+			.addToggle(component => component.setValue(this.plugin.settings.renderFolderItalic)
+				.onChange(async (value) => {
+					this.plugin.settings.renderFolderItalic = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Use bullet-points instead of list")
+			.setDesc("This will render the index file as a bullet-point list instead of a numbered list")
+			.addToggle(component => component.setValue(this.plugin.settings.useBulletPoints)
+				.onChange(async (value) => {
+					this.plugin.settings.useBulletPoints = value
+					await this.plugin.saveSettings()
+				}))
 
 	}
 }
