@@ -89,6 +89,13 @@ export class FolderNoteModule {
 	}
 
 	private async openIndexFile(path: string) {
+		const pathParts = path.split(/\//)
+		for (const excludedFolder of this.plugin.settings.excludeFolders) {
+			const folder = pathParts.slice(0, pathParts.length - 1).join("/")
+			if (RegExp(`^${excludedFolder}$`).test(folder))
+				return;
+		}
+
 		const file = this.app.vault.getAbstractFileByPath(path)
 		if (file instanceof TFile) {
 			await this.app.workspace.getLeaf().openFile(file)
@@ -96,6 +103,12 @@ export class FolderNoteModule {
 	}
 
 	private async createIndexFile(path: string) {
+		const pathParts = path.split(/\//)
+		for (const excludedFolder of this.plugin.settings.excludeFolders) {
+			const folder = pathParts.slice(0, pathParts.length - 1).join("/")
+			if (RegExp(`^${excludedFolder}$`).test(folder))
+				return false
+		}
 		if (this.plugin.settings.autoCreateIndexFile) {
 			const name = path.split(/\//).last()
 			try {

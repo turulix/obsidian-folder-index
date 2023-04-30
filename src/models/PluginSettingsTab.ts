@@ -1,4 +1,4 @@
-import {App, PluginSettingTab, Setting} from "obsidian";
+import {App, PluginSettingTab, Setting, TextAreaComponent} from "obsidian";
 import FolderIndexPlugin from "../main";
 
 export interface PluginSetting {
@@ -18,6 +18,7 @@ export interface PluginSetting {
 	renderFolderBold: boolean;
 	renderFolderItalic: boolean;
 	useBulletPoints: boolean;
+	excludeFolders: string[];
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -29,14 +30,15 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	autoRenameIndexFile: true,
 	includeFileContent: false,
 	hideIndexFiles: false,
-	indexFileInitText: "---\ntags: MOCs\n---\n```folder-index-content\n```",
+	indexFileInitText: "---\ntags: MOCs\n---\n```folder-index-content\n```AAA",
 	autoPreviewMode: false,
 	sortIndexFilesAlphabetically: true,
 	sortHeadersAlphabetically: false,
 	recursiveIndexFiles: false,
 	renderFolderBold: true,
 	renderFolderItalic: false,
-	useBulletPoints: false
+	useBulletPoints: false,
+	excludeFolders: []
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -74,10 +76,22 @@ export class PluginSettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings()
 				}))
 
+		let textFeld: TextAreaComponent = null;
 		new Setting(containerEl)
 			.setName("Initial Content")
 			.setDesc("Set the initial content for new folder indexes.")
+			.addButton(component =>
+				component.setButtonText("Reset")
+					.setWarning()
+					.setTooltip("Reset to default")
+					.onClick(async () => {
+						this.plugin.settings.indexFileInitText = DEFAULT_SETTINGS.indexFileInitText
+						textFeld.setValue(this.plugin.settings.indexFileInitText)
+						await this.plugin.saveSettings()
+					}
+				))
 			.addTextArea(component => {
+				textFeld = component
 				component.setPlaceholder("About the folder.")
 					.setValue(this.plugin.settings.indexFileInitText)
 					.onChange(async (value) => {
@@ -89,7 +103,21 @@ export class PluginSettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
-			.setName("Auto create IndexFile")
+			.setName("Excluded Folders")
+			.setDesc("These Folders will not automatically create an IndexFile")
+			.addTextArea(component => {
+				component.setPlaceholder("Folder1\nFolder2/Foo\nFolder3/Foo/Bar")
+					.setValue(this.plugin.settings.excludeFolders.join("\n"))
+					.onChange(async (value) => {
+						this.plugin.settings.excludeFolders = value.split("\n")
+						await this.plugin.saveSettings()
+					})
+				component.inputEl.rows = 8
+				component.inputEl.cols = 50
+			})
+
+		new Setting(containerEl)
+			.setName("Automatically generate IndexFile")
 			.setDesc("This will automatically create an IndexFile when you create a new folder")
 			.addToggle(component => component.setValue(this.plugin.settings.autoCreateIndexFile)
 				.onChange(async (value) => {
