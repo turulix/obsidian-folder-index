@@ -19,7 +19,6 @@ export function isIndexFile(path: string) {
 }
 
 export function isExcludedPath(path: string) {
-	debugger
 	const pathParts = path.split(/\//)
 	for (const excludedFolder of FolderIndexPlugin.PLUGIN.settings.excludeFolders) {
 		if (excludedFolder == "")
