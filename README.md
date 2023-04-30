@@ -1,5 +1,10 @@
 # Folder Index for Obsidian
 
+![Latest Version](https://img.shields.io/github/v/release/turulix/obsidian-folder-index?sort=semver)
+![GitHub downloads](https://img.shields.io/github/downloads/turulix/obsidian-folder-index/total)
+![Build Status](https://img.shields.io/github/actions/workflow/status/turulix/obsidian-folder-index/release.yml)
+![GitHub stars](https://img.shields.io/github/stars/turulix/obsidian-folder-index?style=social)
+
 ## Features
 
 - Automatic index file generation
