@@ -26,6 +26,23 @@ From now on you should be able to use folders like they are a normal note!
 
 Folders will also be added to the Graph View by default and link all files that are contained within it :D
 
+#### Manual Indexing
+
+You can also use the ``folder-index-content`` Block processor directly like this:
+
+````
+```folder-index-content
+```
+````
+
+to include the content of the folder index in any note you want
+
+#### Frontmatter
+
+| Key   | Description                                       |
+|-------|---------------------------------------------------|
+| title | This will overwrite the Filename inside the Index |
+
 ### Manual Installation
 
 1. Go to [Releases](https://github.com/turulix/obsidian-folder-index/releases) and download the ZIP file from the latest

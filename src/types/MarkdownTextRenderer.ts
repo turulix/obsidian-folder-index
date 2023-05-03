@@ -50,7 +50,7 @@ export class MarkdownTextRenderer {
 
 	private buildContentMarkdownText(file: TFile, indentLevel: number, isFolder = false): string {
 		let markdownText = ""
-		markdownText += this.buildMarkdownLinkString(file.basename, encodeURI(file.path), indentLevel, isFolder)
+		markdownText += this.buildMarkdownLinkString(this.getTitleFromPath(file.path), encodeURI(file.path), indentLevel, isFolder)
 
 		const headers: HeadingCache[] | null = this.app.metadataCache.getFileCache(file)?.headings
 		if (headers && !this.plugin.settings.disableHeadlines) {
@@ -101,6 +101,18 @@ export class MarkdownTextRenderer {
 		}
 
 		return link
+	}
+
+	private getTitleFromPath(path: string): string {
+		const file = this.app.vault.getAbstractFileByPath(path)
+		if (file instanceof TFile) {
+			const cache = this.app.metadataCache.getFileCache(file)
+			if (cache) {
+				return cache.frontmatter?.title ?? file.basename
+			}
+			return file.basename
+		}
+		return "Something went wrong. Please report this issue."
 	}
 
 	private buildHeaderChain(header: HeaderWrapper): string {
