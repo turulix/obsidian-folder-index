@@ -1,6 +1,6 @@
 import {App, HeadingCache, TAbstractFile, TFile, TFolder} from "obsidian";
 import FolderIndexPlugin from "../main";
-import {isIndexFile} from "./Utilities";
+import {isExcludedPath, isIndexFile} from "./Utilities";
 
 type FileTree = (TFile | TFolder)[]
 type HeaderWrapper = {
@@ -24,6 +24,9 @@ export class MarkdownTextRenderer {
 		let markdownText = ""
 
 		for (const file of fileTree) {
+			if(isExcludedPath(file.path)){
+				continue
+			}
 			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
 				// Create a deep copy of the children array
 				let children = file.children;

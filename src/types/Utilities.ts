@@ -19,15 +19,10 @@ export function isIndexFile(path: string) {
 }
 
 export function isExcludedPath(path: string) {
-	const pathParts = path.split(/\//)
 	for (const excludedFolder of FolderIndexPlugin.PLUGIN.settings.excludeFolders) {
 		if (excludedFolder == "")
 			continue
-		let folder = pathParts.slice(0, pathParts.length - 1).join("/")
-		if (!folder.endsWith("/"))
-			folder += "/"
-
-		if (RegExp(`^${excludedFolder}/?$`).test(folder))
+		if (RegExp(`^${excludedFolder}$`).test(path))
 			return true;
 	}
 	return false
