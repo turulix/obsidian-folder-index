@@ -19,6 +19,7 @@ export interface PluginSetting {
 	renderFolderItalic: boolean;
 	useBulletPoints: boolean;
 	excludeFolders: string[];
+	headlineDepth: number;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -38,7 +39,8 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	renderFolderBold: true,
 	renderFolderItalic: false,
 	useBulletPoints: false,
-	excludeFolders: []
+	excludeFolders: [],
+	headlineDepth: 6
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -173,6 +175,28 @@ export class PluginSettingsTab extends PluginSettingTab {
 			.addToggle(component => component.setValue(this.plugin.settings.disableHeadlines)
 				.onChange(async (value) => {
 					this.plugin.settings.disableHeadlines = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Headline Depth")
+			.setDesc("The Depth of the Headline Displayed")
+			.addText(component => component.setValue(this.plugin.settings.headlineDepth.toString())
+				.setPlaceholder("6")
+				.onChange(async (value) => {
+					let numValue: number = Number.parseInt(value)
+
+					if (!isNaN(numValue)) {
+						if (numValue < 0) {
+							numValue = 0
+						}
+						else if (numValue > 6) {
+							numValue = 6
+						}
+					} else {
+						numValue = 6
+					}
+					this.plugin.settings.headlineDepth = numValue
 					await this.plugin.saveSettings()
 				}))
 

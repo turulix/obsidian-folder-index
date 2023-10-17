@@ -38,7 +38,9 @@ export class MarkdownTextRenderer {
 				} else {
 					markdownText += this.buildMarkdownLinkString(file.name, null, indentLevel, true)
 				}
-				markdownText += this.buildStructureMarkdownText(this.buildFileTree(children), indentLevel + 1)
+				if (indentLevel < this.plugin.settings.headlineDepth) {
+					markdownText += this.buildStructureMarkdownText(this.buildFileTree(children), indentLevel + 1)
+				}
 			}
 			if (file instanceof TFile) {
 				if (isIndexFile(file.path)) {
@@ -58,7 +60,9 @@ export class MarkdownTextRenderer {
 		const headers: HeadingCache[] | null = this.app.metadataCache.getFileCache(file)?.headings
 		if (headers && !this.plugin.settings.disableHeadlines) {
 			const headerTree = this.buildHeaderTree(headers)
-			markdownText += this.buildHeaderMarkdownText(file, headerTree, indentLevel + 1)
+			if (indentLevel < this.plugin.settings.headlineDepth) {
+				markdownText += this.buildHeaderMarkdownText(file, headerTree, indentLevel + 1)
+			}
 		}
 
 		return markdownText
@@ -77,7 +81,9 @@ export class MarkdownTextRenderer {
 				encodeURI(file.path) + this.buildHeaderChain(headerWrapper),
 				indentLevel
 			)
-			markdownText += this.buildHeaderMarkdownText(file, headerWrapper.children, indentLevel + 1)
+			if (indentLevel < this.plugin.settings.headlineDepth) {
+				markdownText += this.buildHeaderMarkdownText(file, headerWrapper.children, indentLevel + 1)
+			}
 		}
 
 		return markdownText
