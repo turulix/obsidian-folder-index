@@ -38,7 +38,7 @@ export class MarkdownTextRenderer {
 				} else {
 					markdownText += this.buildMarkdownLinkString(file.name, null, indentLevel, true)
 				}
-				if (indentLevel < this.plugin.settings.headlineDepth) {
+				if (this.plugin.settings.recursionLimit === -1 || indentLevel < this.plugin.settings.recursionLimit) {
 					markdownText += this.buildStructureMarkdownText(this.buildFileTree(children), indentLevel + 1)
 				}
 			}
@@ -60,15 +60,15 @@ export class MarkdownTextRenderer {
 		const headers: HeadingCache[] | null = this.app.metadataCache.getFileCache(file)?.headings
 		if (headers && !this.plugin.settings.disableHeadlines) {
 			const headerTree = this.buildHeaderTree(headers)
-			if (indentLevel < this.plugin.settings.headlineDepth) {
-				markdownText += this.buildHeaderMarkdownText(file, headerTree, indentLevel + 1)
+			if (this.plugin.settings.headlineLimit !== 0) {
+				markdownText += this.buildHeaderMarkdownText(file, headerTree, indentLevel + 1, 1)
 			}
 		}
 
 		return markdownText
 	}
 
-	private buildHeaderMarkdownText(file: TFile, headerTree: HeaderWrapper[], indentLevel: number): string {
+	private buildHeaderMarkdownText(file: TFile, headerTree: HeaderWrapper[], indentLevel: number, headlineLevel: number): string {
 		let markdownText = ""
 
 		if (this.plugin.settings.sortHeadersAlphabetically) {
@@ -81,8 +81,8 @@ export class MarkdownTextRenderer {
 				encodeURI(file.path) + this.buildHeaderChain(headerWrapper),
 				indentLevel
 			)
-			if (indentLevel < this.plugin.settings.headlineDepth) {
-				markdownText += this.buildHeaderMarkdownText(file, headerWrapper.children, indentLevel + 1)
+			if (headlineLevel < this.plugin.settings.headlineLimit) {
+				markdownText += this.buildHeaderMarkdownText(file, headerWrapper.children, indentLevel + 1, headlineLevel + 1)
 			}
 		}
 

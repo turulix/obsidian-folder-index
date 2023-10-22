@@ -19,7 +19,8 @@ export interface PluginSetting {
 	renderFolderItalic: boolean;
 	useBulletPoints: boolean;
 	excludeFolders: string[];
-	headlineDepth: number;
+	recursionLimit: number;
+	headlineLimit: number;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -40,7 +41,8 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	renderFolderItalic: false,
 	useBulletPoints: false,
 	excludeFolders: [],
-	headlineDepth: 6
+	recursionLimit: -1,
+	headlineLimit: 6,
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -179,9 +181,9 @@ export class PluginSettingsTab extends PluginSettingTab {
 				}))
 
 		new Setting(containerEl)
-			.setName("Headline Depth")
-			.setDesc("The Depth of the Headline Displayed")
-			.addText(component => component.setValue(this.plugin.settings.headlineDepth.toString())
+			.setName("Headline Limit")
+			.setDesc("Limit the Depth of Headlines Displayed")
+			.addText(component => component.setValue(this.plugin.settings.headlineLimit.toString())
 				.setPlaceholder("6")
 				.onChange(async (value) => {
 					let numValue: number = Number.parseInt(value)
@@ -196,7 +198,7 @@ export class PluginSettingsTab extends PluginSettingTab {
 					} else {
 						numValue = 6
 					}
-					this.plugin.settings.headlineDepth = numValue
+					this.plugin.settings.headlineLimit = numValue
 					await this.plugin.saveSettings()
 				}))
 
@@ -233,6 +235,20 @@ export class PluginSettingsTab extends PluginSettingTab {
 			.addToggle(component => component.setValue(this.plugin.settings.recursiveIndexFiles)
 				.onChange(async (value) => {
 					this.plugin.settings.recursiveIndexFiles = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Subfolder Limit")
+			.setDesc("Limit the Depth of Subfolders(-1 for no limit)")
+			.addText(component => component.setValue(this.plugin.settings.recursionLimit.toString())
+				.setPlaceholder("-1")
+				.onChange(async (value) => {
+					let numValue: number = Number.parseInt(value)
+					if (isNaN(numValue) || numValue < 0) {
+						numValue = -1
+					}
+					this.plugin.settings.recursionLimit = numValue
 					await this.plugin.saveSettings()
 				}))
 
