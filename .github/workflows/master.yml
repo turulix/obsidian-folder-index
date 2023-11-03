@@ -13,9 +13,6 @@ jobs:
             -   name: Install modules
                 run: npm i
 
-            -   name: Run build
-                run: npm run build
-
             -   name: Check TypeScript
                 run: npx tsc --noEmit
 
