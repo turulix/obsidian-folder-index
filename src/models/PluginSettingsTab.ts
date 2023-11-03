@@ -19,6 +19,8 @@ export interface PluginSetting {
 	renderFolderItalic: boolean;
 	useBulletPoints: boolean;
 	excludeFolders: string[];
+	recursionLimit: number;
+	headlineLimit: number;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -38,7 +40,9 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	renderFolderBold: true,
 	renderFolderItalic: false,
 	useBulletPoints: false,
-	excludeFolders: []
+	excludeFolders: [],
+	recursionLimit: -1,
+	headlineLimit: 6,
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -177,6 +181,28 @@ export class PluginSettingsTab extends PluginSettingTab {
 				}))
 
 		new Setting(containerEl)
+			.setName("Headline Limit")
+			.setDesc("Limit the Depth of Headlines Displayed")
+			.addText(component => component.setValue(this.plugin.settings.headlineLimit.toString())
+				.setPlaceholder("6")
+				.onChange(async (value) => {
+					let numValue: number = Number.parseInt(value)
+
+					if (!isNaN(numValue)) {
+						if (numValue < 0) {
+							numValue = 0
+						}
+						else if (numValue > 6) {
+							numValue = 6
+						}
+					} else {
+						numValue = 6
+					}
+					this.plugin.settings.headlineLimit = numValue
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
 			.setName("Automatic Preview mode")
 			.setDesc("This will automatically swap to preview mode when opening an index file")
 			.addToggle(component => component.setValue(this.plugin.settings.autoPreviewMode)
@@ -209,6 +235,20 @@ export class PluginSettingsTab extends PluginSettingTab {
 			.addToggle(component => component.setValue(this.plugin.settings.recursiveIndexFiles)
 				.onChange(async (value) => {
 					this.plugin.settings.recursiveIndexFiles = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Subfolder Limit")
+			.setDesc("Limit the Depth of Subfolders(-1 for no limit)")
+			.addText(component => component.setValue(this.plugin.settings.recursionLimit.toString())
+				.setPlaceholder("-1")
+				.onChange(async (value) => {
+					let numValue: number = Number.parseInt(value)
+					if (isNaN(numValue) || numValue < 0) {
+						numValue = -1
+					}
+					this.plugin.settings.recursionLimit = numValue
 					await this.plugin.saveSettings()
 				}))
 
