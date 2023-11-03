@@ -115,8 +115,8 @@ export class GraphManipulatorModule {
 			const edges: GraphLink = {}
 			const cache = this.app.metadataCache.getFileCache(file)
 
-			if (file.parent.name + ".md" == file.name || file.name == this.plugin.settings.rootIndexFile) {
-				file.parent.children.forEach(otherFile => {
+			if (file.parent?.name + ".md" == file.name || file.name == this.plugin.settings.rootIndexFile) {
+				file.parent?.children.forEach(otherFile => {
 					if (otherFile instanceof TFile && file.path != otherFile.path) {
 						// Other File will add itself
 						edges[otherFile.path] = true

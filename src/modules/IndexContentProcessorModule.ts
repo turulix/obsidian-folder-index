@@ -44,7 +44,7 @@ export class IndexContentProcessorModule extends MarkdownRenderChild {
 		this.container.empty()
 		const folder: TAbstractFile | null = this.app.vault.getAbstractFileByPath(this.filePath)
 		if (folder instanceof TFile) {
-			const files = folder.parent.children
+			const files = folder.parent?.children ?? []
 			const renderer = new MarkdownTextRenderer(this.plugin, this.app)
 			await MarkdownRenderer.renderMarkdown(renderer.buildMarkdownText(files), this.container, this.filePath, this)
 		}
