@@ -1,21 +1,23 @@
 name: CI
-on: push
+on:
+    push:
+    pull_request:
 
 jobs:
     eslint:
         runs-on: ubuntu-latest
         steps:
             # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-            - uses: actions/checkout@v2
+            -   uses: actions/checkout@v2
 
-            - name: Install modules
-              run: npm i
+            -   name: Install modules
+                run: npm i
 
-            - name: Run build
-              run: npm run build
+            -   name: Run build
+                run: npm run build
 
-            - name: Check TypeScript
-              run: npx tsc --noEmit
+            -   name: Check TypeScript
+                run: npx tsc --noEmit
 
-            - name: Run ESLint
-              run: npx eslint ./src/
+            -   name: Run ESLint
+                run: npx eslint ./src/

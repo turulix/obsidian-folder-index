@@ -28,6 +28,8 @@ export class GraphManipulatorModule {
 	constructor(private app: App, private plugin: FolderIndexPlugin) {
 		this.app = app
 		this.plugin = plugin
+		this.graphsLeafs = []
+		this.oldGraphOverwrite = this.plugin.settings.graphOverwrite
 		this.load()
 	}
 
@@ -49,7 +51,8 @@ export class GraphManipulatorModule {
 					if (this.plugin.settings.graphOverwrite) {
 						this.render(engine)
 					} else {
-						engine.oldRender()
+						if (engine.oldRender)
+							engine.oldRender()
 					}
 				}
 				// We may need to rerender the graph view, so we do this here.
@@ -88,6 +91,7 @@ export class GraphManipulatorModule {
 			const engine = this.getEngine(value)
 			if (engine.oldRender != null) {
 				engine.render = engine.oldRender
+				// @ts-ignore
 				delete engine.oldRender
 				this.clearGraph(engine)
 				engine.render()
@@ -96,7 +100,12 @@ export class GraphManipulatorModule {
 	}
 
 	render(engine: DataEngine) {
-		const renderSettings = engine.getOptions()
+		const renderSettings: {
+			showOrphans: boolean,
+			showAttachments: boolean,
+			showTags: boolean,
+			hideUnresolved: boolean
+		} = engine.getOptions()
 		const graph: Graph = {}
 
 		this.app.vault.getFiles().forEach(async file => {
@@ -146,7 +155,7 @@ export class GraphManipulatorModule {
 				}
 				if (cache.frontmatter != null) {
 					const frontMatterTags = parseFrontMatterTags(cache.frontmatter)
-					if (frontMatterTags != null && renderSettings.showTags == true) {
+					if (frontMatterTags != null && renderSettings.showTags) {
 						frontMatterTags.forEach(tag => {
 							graph[tag] = {
 								links: {},
@@ -156,7 +165,7 @@ export class GraphManipulatorModule {
 						})
 					}
 				}
-				if (cache.tags != null && renderSettings.showTags == true) {
+				if (cache.tags != null && renderSettings.showTags) {
 
 					cache.tags.forEach(tag => {
 						// We have to add it, it will not add itself.
@@ -187,7 +196,7 @@ export class GraphManipulatorModule {
 			}
 
 			let type: NodeType = ""
-			if (this.app.workspace.getActiveFile() != null && this.app.workspace.getActiveFile().path == file.path) {
+			if (this.app.workspace.getActiveFile() != null && this.app.workspace.getActiveFile()?.path == file.path) {
 				type = "focused"
 			} else if (file.extension != "md") {
 				type = "attachment"
@@ -227,10 +236,13 @@ export class GraphManipulatorModule {
 			const fileFilter = engine.fileFilter
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			return !searchQueries || ("" === nodeType ? filePath === engineOptions.localFile || (fileFilter.hasOwnProperty(filePath) ? fileFilter[filePath] : !engine.hasFilter) : "tag" === nodeType ? searchQueries.every((function (e: any) {
+
+					// noinspection JSUnresolvedReference
 					return !!e.color || !!e.query.matchTag(filePath)
 				}
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			)) : "attachment" !== nodeType || searchQueries.every((function (e: any) {
+					// noinspection JSUnresolvedReference
 					return !!e.color || !!e.query.matchFilepath(filePath)
 				}
 			)))

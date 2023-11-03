@@ -7,9 +7,13 @@ import {FolderNoteModule} from "./modules/FolderNoteModule";
 
 // Remember to rename these classes and interfaces!
 export default class FolderIndexPlugin extends Plugin {
+	// @ts-ignore
 	settings: PluginSetting;
+	// @ts-ignore
 	graphManipulator: GraphManipulatorModule | null;
+	// @ts-ignore
 	folderNodeModule: FolderNoteModule;
+	// @ts-ignore
 	eventManager: EventEmitter
 	oldGraphSetting = false
 	static PLUGIN: FolderIndexPlugin;
@@ -38,7 +42,7 @@ export default class FolderIndexPlugin extends Plugin {
 		this.registerEvent(this.app.workspace.on("layout-change", this.onLayoutChange.bind(this)))
 		this.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this))
 
-		this.registerMarkdownCodeBlockProcessor("folder-index-content", (source, el, ctx) => {
+		this.registerMarkdownCodeBlockProcessor("folder-index-content", (_source, el, ctx) => {
 			ctx.addChild(new IndexContentProcessorModule(this.app, this, ctx.sourcePath, el))
 		})
 
@@ -53,7 +57,8 @@ export default class FolderIndexPlugin extends Plugin {
 			if (this.settings.graphOverwrite) {
 				this.graphManipulator = new GraphManipulatorModule(this.app, this)
 			} else {
-				this.graphManipulator.unload()
+				if (this.graphManipulator)
+					this.graphManipulator.unload()
 			}
 			this.oldGraphSetting = this.settings.graphOverwrite
 		}

@@ -80,7 +80,7 @@ export class PluginSettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings()
 				}))
 
-		let textFeld: TextAreaComponent = null;
+		let textFeld: TextAreaComponent | null = null;
 		new Setting(containerEl)
 			.setName("Initial Content")
 			.setDesc("Set the initial content for new folder indexes.")
@@ -90,7 +90,7 @@ export class PluginSettingsTab extends PluginSettingTab {
 					.setTooltip("Reset to default")
 					.onClick(async () => {
 						this.plugin.settings.indexFileInitText = DEFAULT_SETTINGS.indexFileInitText
-						textFeld.setValue(this.plugin.settings.indexFileInitText)
+						textFeld?.setValue(this.plugin.settings.indexFileInitText)
 						await this.plugin.saveSettings()
 					}
 				))

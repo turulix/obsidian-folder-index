@@ -29,21 +29,23 @@ export class FolderNoteModule {
 		// FolderNoteModule.showAllIndexFiles()
 	}
 
+
 	private getTargetFromEvent(event: MouseEvent): HTMLElement | null {
 		if (!(event.target instanceof HTMLElement)) {
-			return
+			return null
 		}
 		const target = event.target
 		// @ts-ignore - This is a hack to get the active plugins.
+		// noinspection JSUnresolvedReference
 		const activePlugins: Set = this.app.plugins.enabledPlugins
 
 		// Compatibility with https://github.com/ozntel/file-tree-alternative
 		if (activePlugins.has("file-tree-alternative")) {
 			if (target.classList.contains("oz-folder-name")) {
-				return target.parentElement.parentElement.parentElement
+				return (target.parentElement?.parentElement?.parentElement) ?? null
 			}
 			if (target.classList.contains("oz-folder-block")) {
-				return target.parentElement.parentElement
+				return (target.parentElement?.parentElement) ?? null
 			}
 		}
 
@@ -110,6 +112,8 @@ export class FolderNoteModule {
 		if (this.plugin.settings.autoCreateIndexFile) {
 			const name = path.split(/\//).last()
 			try {
+				if (!name)
+					return false
 				const file = await this.app.vault.create(path, this.plugin.settings.indexFileInitText.replace("{{folder}}", name))
 				new Notice(`Created index file ${file.basename}`)
 				return true
@@ -181,7 +185,7 @@ export class FolderNoteModule {
 			if (currentState.state.file == this.previousState.state.file)
 				return;
 
-			const currentFile = await this.app.vault.getAbstractFileByPath(currentState.state.file) as TFile
+			const currentFile = this.app.vault.getAbstractFileByPath(currentState.state.file) as TFile
 
 			// We did not open an index file, so we need to check if the previous mode was set by this plugin
 			if (!isIndexFile(currentFile.path)) {

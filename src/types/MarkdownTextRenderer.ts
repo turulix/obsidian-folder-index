@@ -57,7 +57,7 @@ export class MarkdownTextRenderer {
 		let markdownText = ""
 		markdownText += this.buildMarkdownLinkString(this.getTitleFromPath(file.path), encodeURI(file.path), indentLevel, isFolder)
 
-		const headers: HeadingCache[] | null = this.app.metadataCache.getFileCache(file)?.headings
+		const headers: HeadingCache[] | null = this.app.metadataCache.getFileCache(file)?.headings ?? []
 		if (headers && !this.plugin.settings.disableHeadlines) {
 			const headerTree = this.buildHeaderTree(headers)
 			if (this.plugin.settings.headlineLimit !== 0) {
