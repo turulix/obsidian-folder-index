@@ -102,7 +102,7 @@ export class FolderNoteModule {
 
 		const file = this.app.vault.getAbstractFileByPath(path)
 		if (file instanceof TFile) {
-			await this.app.workspace.getLeaf().openFile(file)
+			await this.app.workspace.getLeaf(false).openFile(file)
 		}
 	}
 
@@ -166,15 +166,21 @@ export class FolderNoteModule {
 	}
 
 	private async onLayoutChange() {
+		const currentLeaf = this.app.workspace.getMostRecentLeaf()
+		if (currentLeaf == null) {
+			return;
+		}
+		const currentState = currentLeaf.getViewState();
+
 		try {
+			// try {
 			if (this.previousState == null) {
-				this.previousState = this.app.workspace.getLeaf().getViewState()
+				this.previousState = currentLeaf.getViewState();
 			}
 			if (!this.plugin.settings.autoPreviewMode) {
 				return;
 			}
 
-			const currentState = this.app.workspace.getLeaf().getViewState()
 
 			// We weren't in a markdown file before, so we don't care
 			if (!(currentState.type == "markdown" && this.previousState.type == "markdown")) {
@@ -184,7 +190,6 @@ export class FolderNoteModule {
 			// We didn't change files, so we don't care
 			if (currentState.state.file == this.previousState.state.file)
 				return;
-
 			const currentFile = this.app.vault.getAbstractFileByPath(currentState.state.file) as TFile
 
 			// We did not open an index file, so we need to check if the previous mode was set by this plugin
@@ -192,23 +197,21 @@ export class FolderNoteModule {
 				if (this.viewModeByPlugin) {
 					this.viewModeByPlugin = false
 					currentState.state.mode = "source"
-					await this.app.workspace.getLeaf().setViewState(currentState)
+					await currentLeaf.setViewState(currentState)
 				}
 				return;
 			}
-
-			// We are already inside the Preview Mode.
+			// 	// We are already inside the Preview Mode.
 			if (this.previousState.state.mode == "preview") {
 				return;
 			} else {
 				currentState.state.mode = "preview"
 				this.viewModeByPlugin = true
-				await this.app.workspace.getLeaf().setViewState(currentState)
+				await currentLeaf.setViewState(currentState)
 			}
 		} finally {
-			const currentState = this.app.workspace.getLeaf().getViewState();
 			if (currentState.type == "markdown")
-				this.previousState = currentState;
+				this.previousState = currentLeaf.getViewState();
 		}
 	}
 
