@@ -81,8 +81,8 @@ export class FolderNoteModule {
 			indexFilePath = this.plugin.settings.rootIndexFile
 		}
 
-		// Create the File if it doesn't exist and isn't excluded, then open it
-		if (!this.doesFileExist(indexFilePath) && (folderName == null || !this.plugin.settings.excludeFolders.includes(folderName))) {
+		// Create the File if it doesn't exist and open it
+		if (!this.doesFileExist(indexFilePath)) {
 			if (await this.createIndexFile(indexFilePath)) {
 				await this.openIndexFile(indexFilePath)
 			}
