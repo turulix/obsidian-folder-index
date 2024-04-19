@@ -20,9 +20,13 @@ export function isIndexFile(path: string) {
 }
 
 export function isExcludedPath(path: string) {
-	for (const excludedFolder of FolderIndexPlugin.PLUGIN.settings.excludeFolders) {
+	for (let excludedFolder of FolderIndexPlugin.PLUGIN.settings.excludeFolders) {
 		if (excludedFolder == "")
 			continue
+
+		if (excludedFolder.endsWith("/*"))
+			excludedFolder = excludedFolder.slice(0, -1) + ".*";
+		
 		if (RegExp(`^${excludedFolder}$`).test(path) || RegExp(`^${excludedFolder}$`).test(typescriptPath.dirname(path)))
 			return true;
 	}

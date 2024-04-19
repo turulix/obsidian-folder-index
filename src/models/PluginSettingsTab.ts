@@ -110,7 +110,7 @@ export class PluginSettingsTab extends PluginSettingTab {
 			.setName("Excluded Folders")
 			.setDesc("These Folders will not automatically create an IndexFile")
 			.addTextArea(component => {
-				component.setPlaceholder("Folder1\nFolder2/Foo\nFolder3/Foo/Bar")
+				component.setPlaceholder("Folder1\nFolder2/Foo\nFolder3/*")
 					.setValue(this.plugin.settings.excludeFolders.join("\n"))
 					.onChange(async (value) => {
 						this.plugin.settings.excludeFolders = value.split("\n")
