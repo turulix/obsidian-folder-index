@@ -1,6 +1,12 @@
 import {App, PluginSettingTab, Setting, TextAreaComponent} from "obsidian";
 import FolderIndexPlugin from "../main";
 
+export enum SortBy {
+	None = "Disabled",
+	Alphabetically = "Alphabetically",
+	ReverseAlphabetically = "Reverse Alphabetically"
+}
+
 export interface PluginSetting {
 	graphOverwrite: boolean;
 	//skipFirstHeadline: boolean;
@@ -12,8 +18,8 @@ export interface PluginSetting {
 	autoRenameIndexFile: boolean;
 	hideIndexFiles: boolean;
 	autoPreviewMode: boolean;
-	sortIndexFilesAlphabetically: boolean;
-	sortHeadersAlphabetically: boolean;
+	sortIndexFiles: SortBy;
+	sortHeaders: SortBy;
 	recursiveIndexFiles: boolean;
 	renderFolderBold: boolean;
 	renderFolderItalic: boolean;
@@ -34,8 +40,8 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	hideIndexFiles: false,
 	indexFileInitText: "---\ntags: MOCs\n---\n```folder-index-content\n```",
 	autoPreviewMode: false,
-	sortIndexFilesAlphabetically: true,
-	sortHeadersAlphabetically: false,
+	sortIndexFiles: SortBy.Alphabetically,
+	sortHeaders: SortBy.None,
 	recursiveIndexFiles: false,
 	renderFolderBold: true,
 	renderFolderItalic: false,
@@ -214,20 +220,42 @@ export class PluginSettingsTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Sort Files Alphabetically")
 			.setDesc("This will sort the Files alphabetically")
-			.addToggle(component => component.setValue(this.plugin.settings.sortIndexFilesAlphabetically)
-				.onChange(async (value) => {
-					this.plugin.settings.sortIndexFilesAlphabetically = value
-					await this.plugin.saveSettings()
-				}))
+			.addDropdown(component => {
+				for (const key in SortBy) {
+					if (!isNaN(Number(key))) continue;
+
+					const enumKey: SortBy = SortBy[key as keyof typeof SortBy];
+					const enumValue: string = SortBy[key as keyof typeof SortBy];
+
+					component.addOption(enumKey, enumValue);
+				}
+
+				component.setValue(this.plugin.settings.sortIndexFiles)
+					.onChange(async (value) => {
+						this.plugin.settings.sortIndexFiles = value as SortBy
+						await this.plugin.saveSettings()
+					})
+			})
 
 		new Setting(containerEl)
 			.setName("Sort Headers Alphabetically")
 			.setDesc("This will sort the Headers within a file alphabetically")
-			.addToggle(component => component.setValue(this.plugin.settings.sortHeadersAlphabetically)
-				.onChange(async (value) => {
-					this.plugin.settings.sortHeadersAlphabetically = value
-					await this.plugin.saveSettings()
-				}))
+			.addDropdown(component => {
+				for (const key in SortBy) {
+					if (!isNaN(Number(key))) continue;
+
+					const enumKey: SortBy = SortBy[key as keyof typeof SortBy];
+					const enumValue: string = SortBy[key as keyof typeof SortBy];
+
+					component.addOption(enumKey, enumValue);
+				}
+
+				component.setValue(this.plugin.settings.sortHeaders)
+					.onChange(async (value) => {
+						this.plugin.settings.sortHeaders = value as SortBy
+						await this.plugin.saveSettings()
+					})
+			})
 
 		new Setting(containerEl)
 			.setName("Build IndexFiles Recursively")
