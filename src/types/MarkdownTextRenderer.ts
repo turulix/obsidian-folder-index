@@ -1,6 +1,7 @@
 import {App, HeadingCache, TAbstractFile, TFile, TFolder} from "obsidian";
 import FolderIndexPlugin from "../main";
 import {isExcludedPath, isIndexFile} from "./Utilities";
+import {SortBy} from "../models/PluginSettingsTab";
 
 type FileTree = (TFile | TFolder)[]
 type HeaderWrapper = {
@@ -71,8 +72,10 @@ export class MarkdownTextRenderer {
 	private buildHeaderMarkdownText(file: TFile, headerTree: HeaderWrapper[], indentLevel: number, headlineLevel: number): string {
 		let markdownText = ""
 
-		if (this.plugin.settings.sortHeadersAlphabetically) {
+		if (this.plugin.settings.sortHeaders === SortBy.Alphabetically) {
 			headerTree.sort((a, b) => a.header.heading.localeCompare(b.header.heading))
+		} else if (this.plugin.settings.sortHeaders === SortBy.ReverseAlphabetically) {
+			headerTree.sort((a, b) => b.header.heading.localeCompare(a.header.heading))
 		}
 
 		for (const headerWrapper of headerTree) {
@@ -192,8 +195,10 @@ export class MarkdownTextRenderer {
 				fileTree.push(file)
 			}
 		}
-		if (this.plugin.settings.sortIndexFilesAlphabetically) {
+		if (this.plugin.settings.sortIndexFiles === SortBy.Alphabetically) {
 			fileTree.sort((a, b) => a.name.localeCompare(b.name))
+		} else if (this.plugin.settings.sortIndexFiles === SortBy.ReverseAlphabetically) {
+			fileTree.sort((a, b) => b.name.localeCompare(a.name))
 		}
 		return fileTree
 	}
