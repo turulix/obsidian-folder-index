@@ -1,5 +1,6 @@
 import {TFile} from "obsidian";
 import FolderIndexPlugin from "../main";
+import * as typescriptPath from "path";
 
 export function isIndexFileWithFile(file: TFile) {
 	return isIndexFile(file.path)
@@ -19,10 +20,14 @@ export function isIndexFile(path: string) {
 }
 
 export function isExcludedPath(path: string) {
-	for (const excludedFolder of FolderIndexPlugin.PLUGIN.settings.excludeFolders) {
+	for (let excludedFolder of FolderIndexPlugin.PLUGIN.settings.excludeFolders) {
 		if (excludedFolder == "")
 			continue
-		if (RegExp(`^${excludedFolder}$`).test(path))
+
+		if (excludedFolder.endsWith("/*"))
+			excludedFolder = excludedFolder.slice(0, -1) + ".*";
+		
+		if (RegExp(`^${excludedFolder}$`).test(path) || RegExp(`^${excludedFolder}$`).test(typescriptPath.dirname(path)))
 			return true;
 	}
 	return false
