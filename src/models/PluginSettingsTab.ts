@@ -27,6 +27,8 @@ export interface PluginSetting {
 	excludeFolders: string[];
 	recursionLimit: number;
 	headlineLimit: number;
+	indexFileUserSpecified: boolean;
+	indexFilename: string;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -49,6 +51,8 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	excludeFolders: [],
 	recursionLimit: -1,
 	headlineLimit: 6,
+	indexFileUserSpecified: false,
+	indexFilename: "!"
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -136,11 +140,21 @@ export class PluginSettingsTab extends PluginSettingTab {
 				}))
 
 		new Setting(containerEl)
-			.setName("Automatically Rename IndexFile")
-			.setDesc("This will automatically rename the folders index file as you rename folders")
-			.addToggle(component => component.setValue(this.plugin.settings.autoRenameIndexFile)
+			.setName("User defined index filename")
+			.setDesc("This will automatically create an IndexFile with the user defined name")
+			.addToggle(component => component.setValue(this.plugin.settings.indexFileUserSpecified)
 				.onChange(async (value) => {
-					this.plugin.settings.autoRenameIndexFile = value
+					this.plugin.settings.indexFileUserSpecified = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Index filename")
+			.setDesc("the filename that is used as the folder index")
+			.addText(component => component.setValue(this.plugin.settings.indexFilename)
+				.setPlaceholder("!.md")
+				.onChange(async (value) => {
+					this.plugin.settings.indexFilename = value
 					await this.plugin.saveSettings()
 				}))
 

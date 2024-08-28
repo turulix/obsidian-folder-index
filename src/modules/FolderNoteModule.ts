@@ -59,6 +59,15 @@ export class FolderNoteModule {
 		return null
 	}
 
+	private indexFilePathOnClick(dataPath: string) {
+		if (this.plugin.settings.indexFileUserSpecified) {
+			return dataPath + "/" + this.plugin.settings.indexFilename + ".md"
+		} else {
+			const folderName = dataPath.split("/").pop()
+			return dataPath + "/" + folderName + ".md"
+		}
+	}
+
 	private async onClick(event: MouseEvent) {
 		const target = this.getTargetFromEvent(event)
 		if (target == null)
@@ -73,8 +82,7 @@ export class FolderNoteModule {
 			dataPath = dataPathAttribute.value
 		}
 
-		const folderName = dataPath.split("/").pop()
-		let indexFilePath = dataPath + "/" + folderName + ".md"
+		let indexFilePath = this.indexFilePathOnClick(dataPath)
 
 		// This is the root folder, so we open the root index file
 		if (indexFilePath == "//.md") {
