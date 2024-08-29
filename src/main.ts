@@ -4,6 +4,8 @@ import {GraphManipulatorModule} from "./modules/GraphManipulatorModule";
 import {EventEmitter} from "events";
 import {DEFAULT_SETTINGS, PluginSetting, PluginSettingsTab} from "./models/PluginSettingsTab";
 import {FolderNoteModule} from "./modules/FolderNoteModule";
+import {ContextMenuModule} from "./modules/ContextMenuModule";
+
 
 // Remember to rename these classes and interfaces!
 export default class FolderIndexPlugin extends Plugin {
@@ -17,7 +19,8 @@ export default class FolderIndexPlugin extends Plugin {
 	eventManager: EventEmitter
 	oldGraphSetting = false
 	static PLUGIN: FolderIndexPlugin;
-
+	// @ts-ignore
+	private contextMenuModule: ContextMenuModule;
 
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
@@ -50,6 +53,9 @@ export default class FolderIndexPlugin extends Plugin {
 		if (this.settings.graphOverwrite) {
 			this.graphManipulator = new GraphManipulatorModule(this.app, this)
 		}
+
+		this.contextMenuModule = new ContextMenuModule(this.app, this);
+		this.contextMenuModule.addFolderContextMenu();
 	}
 
 	onSettingsUpdate() {

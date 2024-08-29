@@ -2,8 +2,11 @@ import {App, PluginSettingTab, Setting, TextAreaComponent} from "obsidian";
 import FolderIndexPlugin from "../main";
 
 export enum SortBy {
+	// eslint-disable-next-line no-unused-vars
 	None = "Disabled",
+	// eslint-disable-next-line no-unused-vars
 	Alphabetically = "Alphabetically",
+	// eslint-disable-next-line no-unused-vars
 	ReverseAlphabetically = "Reverse Alphabetically"
 }
 
@@ -27,6 +30,8 @@ export interface PluginSetting {
 	excludeFolders: string[];
 	recursionLimit: number;
 	headlineLimit: number;
+	indexFileUserSpecified: boolean;
+	indexFilename: string;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -49,6 +54,8 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	excludeFolders: [],
 	recursionLimit: -1,
 	headlineLimit: 6,
+	indexFileUserSpecified: false,
+	indexFilename: "!"
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -141,6 +148,25 @@ export class PluginSettingsTab extends PluginSettingTab {
 			.addToggle(component => component.setValue(this.plugin.settings.autoRenameIndexFile)
 				.onChange(async (value) => {
 					this.plugin.settings.autoRenameIndexFile = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("User defined index filename")
+			.setDesc("This will automatically create an IndexFile with the user defined name")
+			.addToggle(component => component.setValue(this.plugin.settings.indexFileUserSpecified)
+				.onChange(async (value) => {
+					this.plugin.settings.indexFileUserSpecified = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName("Index filename")
+			.setDesc("the filename that is used as the folder index")
+			.addText(component => component.setValue(this.plugin.settings.indexFilename)
+				.setPlaceholder("!.md")
+				.onChange(async (value) => {
+					this.plugin.settings.indexFilename = value
 					await this.plugin.saveSettings()
 				}))
 

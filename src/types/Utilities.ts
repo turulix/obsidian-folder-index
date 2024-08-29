@@ -14,6 +14,9 @@ export function isIndexFile(path: string) {
 	if (pathParts.length < 2)
 		return false
 	const fileName = pathParts[pathParts.length - 1]
+	if (FolderIndexPlugin.PLUGIN.settings.indexFileUserSpecified) {
+		return fileName == FolderIndexPlugin.PLUGIN.settings.indexFilename + ".md";
+	}
 	const folderName = pathParts[pathParts.length - 2] + ".md"
 	return fileName == folderName || fileName == FolderIndexPlugin.PLUGIN.settings.rootIndexFile;
 }
