@@ -4,7 +4,9 @@ import FolderIndexPlugin from "../main";
 export enum SortBy {
 	None = "Disabled",
 	Alphabetically = "Alphabetically",
-	ReverseAlphabetically = "Reverse Alphabetically"
+	ReverseAlphabetically = "Reverse Alphabetically",
+	Natural = "Natural",
+	ReverseNatural = "Reverse Natural"
 }
 
 export interface PluginSetting {

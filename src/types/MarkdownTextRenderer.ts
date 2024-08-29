@@ -199,8 +199,37 @@ export class MarkdownTextRenderer {
 			fileTree.sort((a, b) => a.name.localeCompare(b.name))
 		} else if (this.plugin.settings.sortIndexFiles === SortBy.ReverseAlphabetically) {
 			fileTree.sort((a, b) => b.name.localeCompare(a.name))
+		} else if (this.plugin.settings.sortIndexFiles === SortBy.Natural) {
+			fileTree.sort((a, b) => this.naturalSort(a, b))
+		} else if (this.plugin.settings.sortIndexFiles === SortBy.ReverseNatural) {
+			fileTree.sort((a, b) => this.naturalSort(b, a))
 		}
 		return fileTree
+	}
+
+	private naturalSort(a: string, b: string): number {
+		const re = /(\d+)|(\D+)/g;
+		const aParts = a.split(re).filter(part => part.length > 0);
+		const bParts = b.split(re).filter(part => part.length > 0);
+	
+		for (let i = 0; i < Math.min(aParts.length, bParts.length); i++) {
+			const aPart = aParts[i];
+			const bPart = bParts[i];
+	
+			if (!isNaN(Number(aPart)) && !isNaN(Number(bPart))) {
+				const numA = Number(aPart);
+				const numB = Number(bPart);
+				if (numA !== numB) {
+					return numA - numB;
+				}
+			} else {
+				if (aPart !== bPart) {
+					return aPart.localeCompare(bPart);
+				}
+			}
+		}
+	
+		return aParts.length - bParts.length;
 	}
 
 	private buildIndentLevel(indentLevel: number): string {
