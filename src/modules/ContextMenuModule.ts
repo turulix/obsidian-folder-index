@@ -1,7 +1,8 @@
-import { TFolder, Menu, Notice, App } from 'obsidian';
+import { TFolder, Notice, App } from 'obsidian';
 import FolderIndexPlugin from "../main";
 
 export class ContextMenuModule {
+	// eslint-disable-next-line no-unused-vars
     constructor(private app: App, private plugin: FolderIndexPlugin) {
     }
 
@@ -43,8 +44,10 @@ export class ContextMenuModule {
 
             // Notify the user
             new Notice(`File "${newFile.name}" created successfully in folder "${newFile.path}".`);
+			// eslint-disable-next-line no-console
             console.log(`File created at path: ${newFile.path}`);
         } catch (error) {
+			// eslint-disable-next-line no-console
             console.error(`Failed to create file at path: ${filePath}`, error);
             new Notice("Failed to create file. See console for details.");
         }

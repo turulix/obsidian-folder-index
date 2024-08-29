@@ -2,8 +2,11 @@ import {App, PluginSettingTab, Setting, TextAreaComponent} from "obsidian";
 import FolderIndexPlugin from "../main";
 
 export enum SortBy {
+	// eslint-disable-next-line no-unused-vars
 	None = "Disabled",
+	// eslint-disable-next-line no-unused-vars
 	Alphabetically = "Alphabetically",
+	// eslint-disable-next-line no-unused-vars
 	ReverseAlphabetically = "Reverse Alphabetically"
 }
 
