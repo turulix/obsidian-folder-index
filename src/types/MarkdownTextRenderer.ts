@@ -200,17 +200,17 @@ export class MarkdownTextRenderer {
 		} else if (this.plugin.settings.sortIndexFiles === SortBy.ReverseAlphabetically) {
 			fileTree.sort((a, b) => b.name.localeCompare(a.name))
 		} else if (this.plugin.settings.sortIndexFiles === SortBy.Natural) {
-			fileTree.sort((a, b) => this.naturalSort(a, b))
+			fileTree.sort((a, b) => this.naturalSort(a.name, b.name))
 		} else if (this.plugin.settings.sortIndexFiles === SortBy.ReverseNatural) {
-			fileTree.sort((a, b) => this.naturalSort(b, a))
+			fileTree.sort((a, b) => this.naturalSort(b.name, a.name))
 		}
 		return fileTree
 	}
 
 	private naturalSort(a: string, b: string): number {
 		const re = /(\d+)|(\D+)/g;
-		const aParts = a.split(re).filter(part => part.length > 0);
-		const bParts = b.split(re).filter(part => part.length > 0);
+		const aParts = a.split(re).filter((item) => item !== undefined && item.length > 0);
+		const bParts = b.split(re).filter((item) => item !== undefined && item.length > 0)
 	
 		for (let i = 0; i < Math.min(aParts.length, bParts.length); i++) {
 			const aPart = aParts[i];
