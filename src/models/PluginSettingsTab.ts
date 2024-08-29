@@ -140,6 +140,15 @@ export class PluginSettingsTab extends PluginSettingTab {
 				}))
 
 		new Setting(containerEl)
+			.setName("Automatically Rename IndexFile")
+			.setDesc("This will automatically rename the folders index file as you rename folders")
+			.addToggle(component => component.setValue(this.plugin.settings.autoRenameIndexFile)
+				.onChange(async (value) => {
+					this.plugin.settings.autoRenameIndexFile = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
 			.setName("User defined index filename")
 			.setDesc("This will automatically create an IndexFile with the user defined name")
 			.addToggle(component => component.setValue(this.plugin.settings.indexFileUserSpecified)
