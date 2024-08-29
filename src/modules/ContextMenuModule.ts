@@ -10,7 +10,7 @@ export class ContextMenuModule {
             if (folder instanceof TFolder) {
                 const indexFileForFolder = this.getIndexFileForFolder(folder.path)
 
-                if (this.doesIndexFileExistForFolder(indexFileForFolder) != null) {
+                if (!this.doesIndexFileExistForFolder(indexFileForFolder)) {
                     menu.addItem((item) => {
                         item.setTitle("Create Index File")
                             .setIcon("any-icon")
@@ -26,17 +26,20 @@ export class ContextMenuModule {
     }
 
     private getIndexFileForFolder(path:string): string {
-        let indexFilename = (this.plugin.settings.indexFileUserSpecified) 
-            ? this.plugin.settings.indexFilename 
-            : path.split("/").pop() || ""
-        return path + "/" + indexFilename + ".md";
+        return path + "/" + this.getIndexFileName(path) + ".md";
+    }
+
+    private getIndexFileName(path: string) {
+        return (this.plugin.settings.indexFileUserSpecified)
+            ? this.plugin.settings.indexFilename
+            : path.split("/").pop() || "";
     }
 
     private async createIndexFileForFolder(indexFileForFolder: string) {
         const filePath = indexFileForFolder.substring(0, indexFileForFolder.lastIndexOf("/"))
         try {
             // Create a new markdown file
-            const newFile = await this.app.vault.create(indexFileForFolder, "# New File Content");
+            const newFile = await this.app.vault.create(indexFileForFolder, this.plugin.settings.indexFileInitText.replace("{{folder}}", this.getIndexFileForFolder(indexFileForFolder)))
 
             // Notify the user
             new Notice(`File "${newFile.name}" created successfully in folder "${newFile.path}".`);
