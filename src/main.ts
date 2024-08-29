@@ -4,7 +4,7 @@ import {GraphManipulatorModule} from "./modules/GraphManipulatorModule";
 import {EventEmitter} from "events";
 import {DEFAULT_SETTINGS, PluginSetting, PluginSettingsTab} from "./models/PluginSettingsTab";
 import {FolderNoteModule} from "./modules/FolderNoteModule";
-import { ContextMenuModule } from './modules/ContextMenuModule.ts';
+import { ContextMenuModule } from './modules/ContextMenuModule';
 
 
 // Remember to rename these classes and interfaces!
