@@ -7,7 +7,11 @@ export enum SortBy {
 	// eslint-disable-next-line no-unused-vars
 	Alphabetically = "Alphabetically",
 	// eslint-disable-next-line no-unused-vars
-	ReverseAlphabetically = "Reverse Alphabetically"
+	ReverseAlphabetically = "Reverse Alphabetically",
+	// eslint-disable-next-line no-unused-vars
+	Natural = "Natural",
+	// eslint-disable-next-line no-unused-vars
+	ReverseNatural = "Reverse Natural"
 }
 
 export interface PluginSetting {
