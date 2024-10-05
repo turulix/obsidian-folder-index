@@ -59,12 +59,12 @@ export class FolderNoteModule {
 		return null
 	}
 
-	private indexFilePathOnClick(dataPath: string) {
+	private indexFilePath(path: string): string {
 		if (this.plugin.settings.indexFileUserSpecified) {
-			return dataPath + "/" + this.plugin.settings.indexFilename + ".md"
+			return path + "/" + this.plugin.settings.indexFilename + ".md";
 		} else {
-			const folderName = dataPath.split("/").pop()
-			return dataPath + "/" + folderName + ".md"
+			const folderName = path.split("/").pop();
+			return path + "/" + folderName + ".md";
 		}
 	}
 
@@ -82,7 +82,7 @@ export class FolderNoteModule {
 			dataPath = dataPathAttribute.value
 		}
 
-		let indexFilePath = this.indexFilePathOnClick(dataPath)
+		let indexFilePath = this.indexFilePath(dataPath)
 
 		// This is the root folder, so we open the root index file
 		if (indexFilePath == "//.md") {
@@ -225,7 +225,8 @@ export class FolderNoteModule {
 
 	private async onCreate(file: TAbstractFile) {
 		if (file instanceof TFolder) {
-			await this.createIndexFile(`${file.path}/${file.name}.md`)
+			const indexFilePath = this.indexFilePath(file.path);
+			await this.createIndexFile(indexFilePath);
 		}
 	}
 }
