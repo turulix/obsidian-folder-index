@@ -1,11 +1,10 @@
 import {App, Plugin, PluginManifest} from 'obsidian';
 import {IndexContentProcessorModule} from "./modules/IndexContentProcessorModule";
 import {GraphManipulatorModule} from "./modules/GraphManipulatorModule";
-import {EventEmitter} from "events";
 import {DEFAULT_SETTINGS, PluginSetting, PluginSettingsTab} from "./models/PluginSettingsTab";
 import {FolderNoteModule} from "./modules/FolderNoteModule";
 import {ContextMenuModule} from "./modules/ContextMenuModule";
-
+import CustomEventTarget from "./modules/CustomEventTarget";
 
 // Remember to rename these classes and interfaces!
 export default class FolderIndexPlugin extends Plugin {
@@ -30,7 +29,7 @@ export default class FolderIndexPlugin extends Plugin {
 	async onload() {
 		// eslint-disable-next-line no-console
 		console.log("Loading FolderTableContent")
-		this.eventManager = new EventEmitter()
+		this.eventManager = new CustomEventTarget()
 
 		await this.loadSettings();
 
