@@ -1,6 +1,6 @@
 import {App, HeadingCache, TAbstractFile, TFile, TFolder} from "obsidian";
 import FolderIndexPlugin from "../main";
-import {ExcludePatternManager} from "./ExcludePatternManager";
+import {isExcludedPath, isIndexFile} from "./Utilities";
 import {SortBy} from "../models/PluginSettingsTab";
 
 type FileTree = (TFile | TFolder)[]
@@ -11,14 +11,9 @@ type HeaderWrapper = {
 }
 
 export class MarkdownTextRenderer {
-	constructor(
-		private plugin: FolderIndexPlugin, 
-		private app: App,
-		private excludeManager: ExcludePatternManager
-	) {
+	constructor(private plugin: FolderIndexPlugin, private app: App) {
 		this.plugin = plugin
 		this.app = app
-		this.excludeManager = excludeManager
 	}
 
 	public buildMarkdownText(filesInFolder: TAbstractFile[]): string {
@@ -30,7 +25,7 @@ export class MarkdownTextRenderer {
 		let markdownText = ""
 
 		for (const file of fileTree) {
-			if(this.excludeManager.isExcluded(file.path)){
+			if(isExcludedPath(file.path)){
 				continue
 			}
 			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
@@ -49,10 +44,7 @@ export class MarkdownTextRenderer {
 				}
 			}
 			if (file instanceof TFile) {
-				if (this.excludeManager.isExcluded(file.path)) {
-					continue;
-				}
-				if (this.plugin.settings.excludeIndexFiles && this.excludeManager.isIndexFile(file.path)) {
+				if (isIndexFile(file.path)) {
 					continue;
 				}
 				markdownText += this.buildContentMarkdownText(file, indentLevel)
@@ -146,7 +138,7 @@ export class MarkdownTextRenderer {
 	private checkIfFolderHasIndexFile(children: TAbstractFile[]): TFile | null {
 		for (const file of children) {
 			if (file instanceof TFile) {
-				if (this.excludeManager.isIndexFile(file.path)) {
+				if (isIndexFile(file.path)) {
 					return file
 				}
 			}

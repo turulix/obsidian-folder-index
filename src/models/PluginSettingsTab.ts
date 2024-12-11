@@ -140,6 +140,20 @@ export class PluginSettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
+			.setName("Excluded Patterns")
+			.setDesc("Files and folders matching these patterns will be excluded from the content renderer. Use * as wildcard. One pattern per line.")
+			.addTextArea(component => {
+				component.setPlaceholder("Assets\n*img*\n*.pdf")
+					.setValue(this.plugin.settings.excludePatterns.join("\n"))
+					.onChange(async (value) => {
+						this.plugin.settings.excludePatterns = value.split("\n")
+						await this.plugin.saveSettings()
+					})
+				component.inputEl.rows = 8
+				component.inputEl.cols = 50
+			})
+
+		new Setting(containerEl)
 			.setName("Automatically generate IndexFile")
 			.setDesc("This will automatically create an IndexFile when you create a new folder")
 			.addToggle(component => component.setValue(this.plugin.settings.autoCreateIndexFile)
@@ -188,20 +202,6 @@ export class PluginSettingsTab extends PluginSettingTab {
 			)
 
 		containerEl.createEl('h2', {text: 'Content Renderer Settings'});
-
-		new Setting(containerEl)
-			.setName("Excluded Patterns")
-			.setDesc("Files and folders matching these patterns will be excluded from the content renderer. Use * as wildcard. One pattern per line.")
-			.addTextArea(component => {
-				component.setPlaceholder("Assets\n*img*\n*.pdf")
-					.setValue(this.plugin.settings.excludePatterns.join("\n"))
-					.onChange(async (value) => {
-						this.plugin.settings.excludePatterns = value.split("\n")
-						await this.plugin.saveSettings()
-					})
-				component.inputEl.rows = 8
-				component.inputEl.cols = 50
-			})
 
 		// new Setting(containerEl)
 		// 	.setName("Skip First Headline")
