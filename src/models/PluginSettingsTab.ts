@@ -32,6 +32,7 @@ export interface PluginSetting {
 	renderFolderItalic: boolean;
 	useBulletPoints: boolean;
 	excludeFolders: string[];
+	excludePatterns: string[];
 	recursionLimit: number;
 	headlineLimit: number;
 	indexFileUserSpecified: boolean;
@@ -56,6 +57,7 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	renderFolderItalic: false,
 	useBulletPoints: false,
 	excludeFolders: [],
+	excludePatterns: [],
 	recursionLimit: -1,
 	headlineLimit: 6,
 	indexFileUserSpecified: false,
@@ -131,6 +133,20 @@ export class PluginSettingsTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.excludeFolders.join("\n"))
 					.onChange(async (value) => {
 						this.plugin.settings.excludeFolders = value.split("\n")
+						await this.plugin.saveSettings()
+					})
+				component.inputEl.rows = 8
+				component.inputEl.cols = 50
+			})
+
+		new Setting(containerEl)
+			.setName("Excluded Patterns")
+			.setDesc("Files and folders matching these patterns will be excluded from the content renderer. Use * as wildcard. One pattern per line.")
+			.addTextArea(component => {
+				component.setPlaceholder("Assets\n*img*\n*.pdf")
+					.setValue(this.plugin.settings.excludePatterns.join("\n"))
+					.onChange(async (value) => {
+						this.plugin.settings.excludePatterns = value.split("\n")
 						await this.plugin.saveSettings()
 					})
 				component.inputEl.rows = 8

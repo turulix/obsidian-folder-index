@@ -22,10 +22,21 @@ export function isIndexFile(path: string) {
 }
 
 export function isExcludedPath(path: string) {
+	// Check exact folder matches first
 	for (const excludedFolder of FolderIndexPlugin.PLUGIN.settings.excludeFolders) {
 		if (excludedFolder == "")
 			continue
 		if (RegExp(`^${excludedFolder}$`).test(path))
+			return true;
+	}
+
+	// Then check pattern matches
+	for (const pattern of FolderIndexPlugin.PLUGIN.settings.excludePatterns) {
+		if (pattern == "")
+			continue
+		// Escape special characters in the pattern except * which we'll use as wildcard
+		const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*');
+		if (new RegExp(escapedPattern, 'i').test(path))
 			return true;
 	}
 	return false
