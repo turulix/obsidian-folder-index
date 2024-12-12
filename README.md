@@ -35,20 +35,7 @@ You can also use the ``folder-index-content`` Block processor directly like this
 ```
 ````
 
-to include the content of the folder index in any note you want
-
-You can also exclude specific files or folders in the code block using the `ignore` option:
-
-````
-```folder-index-content
-ignore: folder1/, *test*, *.pdf
-```
-````
-
-The `ignore` option supports:
-- Multiple patterns separated by commas
-- Wildcards using `*` (e.g., `*.pdf` to exclude all PDF files)
-- This works in addition to the global exclude patterns in the plugin settings
+to include the content of the folder index in any note you want.
 
 #### Frontmatter
 
@@ -67,11 +54,18 @@ The `folder-index-content` code block supports the following configuration optio
 | recursionLimit | Override the global subfolder limit for this index | `recursionLimit: 2` |
 
 Example:
+````md
 ```folder-index-content
 title: Project Files
-ignore: *.pdf, *img*, temp
+ignore: *.pdf, *img*, temp, Folder/
 recursionLimit: 2
 ```
+````
+
+The `ignore` option supports:
+- Multiple patterns separated by commas
+- Wildcards using `*` (e.g., `*.pdf` to exclude all PDF files)
+- This works in addition to the global exclude patterns in the plugin settings
 
 ### Settings
 
