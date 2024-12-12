@@ -56,6 +56,38 @@ The `ignore` option supports:
 |-------|---------------------------------------------------|
 | title | This will overwrite the Filename inside the Index |
 
+### Code Block Configuration
+
+The `folder-index-content` code block supports the following configuration options:
+
+| Option | Description | Example |
+|--------|-------------|---------|
+| title | This will overwrite the Filename inside the Index | `title: My Custom Title` |
+| ignore | Files/folders to exclude from the content (supports wildcards) | `ignore: *.pdf, *img*, temp` |
+| recursionLimit | Override the global subfolder limit for this index | `recursionLimit: 2` |
+
+Example:
+```folder-index-content
+title: Project Files
+ignore: *.pdf, *img*, temp
+recursionLimit: 2
+```
+
+### Settings
+
+| Setting | Description |
+|---------|-------------|
+| Graph View | Overwrite the default graph view to show folder structure |
+| Root Index File | The file used for the root index |
+| Initial Content | Default content for new folder indexes |
+| Excluded Folders | Folders that won't create index files automatically |
+| Excluded Patterns | Files/folders to exclude from content (supports wildcards) |
+| Only Show Markdown Files | When enabled, only markdown files will be shown in indexes |
+| Auto Generate Index | Create index files automatically for new folders |
+| Auto Rename Index | Rename index files when folders are renamed |
+| User Defined Index Name | Use a custom name for index files |
+| Index Filename | The custom filename for indexes |
+
 ### Manual Installation
 
 1. Go to [Releases](https://github.com/turulix/obsidian-folder-index/releases) and download the ZIP file from the latest

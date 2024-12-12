@@ -193,9 +193,17 @@ export class MarkdownTextRenderer {
 				continue;
 			}
 			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
+				// 使用本地配置的递归层级限制（如果有的话），否则使用全局设置
+				const currentLimit = codeBlockConfig?.recursionLimit ?? this.plugin.settings.recursionLimit;
+				if (currentLimit !== -1 && this.getFolderDepth(file) >= currentLimit) {
+					continue;
+				}
 				fileTree.push(file)
 			}
 			if (file instanceof TFile) {
+				if (this.plugin.settings.markdownOnly && file.extension !== 'md') {
+					continue;
+				}
 				fileTree.push(file)
 			}
 		}
@@ -209,6 +217,16 @@ export class MarkdownTextRenderer {
 			fileTree.sort((a, b) => this.naturalSort(b.name, a.name))
 		}
 		return fileTree
+	}
+
+	private getFolderDepth(folder: TFolder): number {
+		let depth = 0;
+		let current = folder;
+		while (current.parent) {
+			depth++;
+			current = current.parent;
+		}
+		return depth;
 	}
 
 	private isPathIgnored(path: string, ignorePatterns: string[]): boolean {
@@ -255,4 +273,11 @@ export class MarkdownTextRenderer {
 		}
 		return indentText
 	}
+}
+
+interface CodeBlockConfig {
+	title?: string;
+	type?: string;
+	ignore?: string[];
+	recursionLimit?: number;  // 添加本地递归层级限制
 }

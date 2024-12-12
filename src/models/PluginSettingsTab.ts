@@ -37,6 +37,7 @@ export interface PluginSetting {
 	headlineLimit: number;
 	indexFileUserSpecified: boolean;
 	indexFilename: string;
+	markdownOnly: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -61,7 +62,8 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	recursionLimit: -1,
 	headlineLimit: 6,
 	indexFileUserSpecified: false,
-	indexFilename: "!"
+	indexFilename: "!",
+	markdownOnly: false
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -140,20 +142,6 @@ export class PluginSettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
-			.setName("Excluded Patterns")
-			.setDesc("Files and folders matching these patterns will be excluded from the content renderer. Use * as wildcard. One pattern per line.")
-			.addTextArea(component => {
-				component.setPlaceholder("Assets\n*img*\n*.pdf")
-					.setValue(this.plugin.settings.excludePatterns.join("\n"))
-					.onChange(async (value) => {
-						this.plugin.settings.excludePatterns = value.split("\n")
-						await this.plugin.saveSettings()
-					})
-				component.inputEl.rows = 8
-				component.inputEl.cols = 50
-			})
-
-		new Setting(containerEl)
 			.setName("Automatically generate IndexFile")
 			.setDesc("This will automatically create an IndexFile when you create a new folder")
 			.addToggle(component => component.setValue(this.plugin.settings.autoCreateIndexFile)
@@ -203,6 +191,29 @@ export class PluginSettingsTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', {text: 'Content Renderer Settings'});
 
+		new Setting(containerEl)
+			.setName("Only Show Markdown Files")
+			.setDesc("When enabled, only markdown files will be shown in the index")
+			.addToggle(component => component.setValue(this.plugin.settings.markdownOnly)
+				.onChange(async (value) => {
+					this.plugin.settings.markdownOnly = value
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+		.setName("Excluded Patterns")
+		.setDesc("Files and folders matching these patterns will be excluded from the content renderer. Use * as wildcard. One pattern per line.")
+		.addTextArea(component => {
+			component.setPlaceholder("Assets\n*img*\n*.pdf")
+				.setValue(this.plugin.settings.excludePatterns.join("\n"))
+				.onChange(async (value) => {
+					this.plugin.settings.excludePatterns = value.split("\n")
+					await this.plugin.saveSettings()
+				})
+			component.inputEl.rows = 8
+			component.inputEl.cols = 50
+		})
+		
 		// new Setting(containerEl)
 		// 	.setName("Skip First Headline")
 		// 	.setDesc("This Option should not be used anymore, as Obsidian now shows the Filename itself " +

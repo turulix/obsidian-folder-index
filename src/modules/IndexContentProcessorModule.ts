@@ -50,32 +50,32 @@ export class IndexContentProcessorModule extends MarkdownRenderChild {
 		if (folder instanceof TFile) {
 			const files = folder.parent?.children ?? []
 			const renderer = new MarkdownTextRenderer(this.plugin, this.app)
-			const codeBlockConfig = this.parseCodeBlockConfig()
+			const codeBlockConfig = this.parseCodeBlockConfig(this.codeBlockContent)
 			await MarkdownRenderer.renderMarkdown(renderer.buildMarkdownText(files, codeBlockConfig), this.container, this.filePath, this)
 		}
 	}
 
-	private parseCodeBlockConfig(): CodeBlockConfig {
-		const config: CodeBlockConfig = { ignore: [] }
-		
-		// Parse each line of the code block content
-		const lines = this.codeBlockContent.split("\n")
-		
+	private parseCodeBlockConfig(source: string): CodeBlockConfig {
+		const config: CodeBlockConfig = {};
+		const lines = source.split('\n');
+
 		for (const line of lines) {
-			const parts = line.split(":");
-			
-			if (parts.length >= 2) {
-				const [key, ...valueParts] = parts;
-				const value = valueParts.join(":").trim();
-				const trimmedKey = key.trim();
-				
-				if (trimmedKey === "ignore") {
-					// Split by comma and trim each pattern
-					config.ignore = value.split(",").map(s => s.trim());
+			if (line.trim().startsWith('title:')) {
+				config.title = line.split('title:')[1].trim();
+			} else if (line.trim().startsWith('type:')) {
+				config.type = line.split('type:')[1].trim();
+			} else if (line.trim().startsWith('ignore:')) {
+				const ignoreStr = line.split('ignore:')[1].trim();
+				config.ignore = ignoreStr.split(',').map(s => s.trim());
+			} else if (line.trim().startsWith('recursionLimit:')) {
+				const limitStr = line.split('recursionLimit:')[1].trim();
+				const limit = parseInt(limitStr);
+				if (!isNaN(limit)) {
+					config.recursionLimit = limit;
 				}
 			}
 		}
-		
-		return config
+
+		return config;
 	}
 }
