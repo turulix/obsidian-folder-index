@@ -37,6 +37,19 @@ You can also use the ``folder-index-content`` Block processor directly like this
 
 to include the content of the folder index in any note you want
 
+You can also exclude specific files or folders in the code block using the `ignore` option:
+
+````
+```folder-index-content
+ignore: folder1/, *test*, *.pdf
+```
+````
+
+The `ignore` option supports:
+- Multiple patterns separated by commas
+- Wildcards using `*` (e.g., `*.pdf` to exclude all PDF files)
+- This works in addition to the global exclude patterns in the plugin settings
+
 #### Frontmatter
 
 | Key   | Description                                       |
