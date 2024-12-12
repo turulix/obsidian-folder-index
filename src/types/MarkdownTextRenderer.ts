@@ -274,10 +274,3 @@ export class MarkdownTextRenderer {
 		return indentText
 	}
 }
-
-interface CodeBlockConfig {
-	title?: string;
-	type?: string;
-	ignore?: string[];
-	recursionLimit?: number;  // 添加本地递归层级限制
-}
