@@ -1,20 +1,24 @@
 import {App, MarkdownRenderChild, MarkdownRenderer, TAbstractFile, TFile} from "obsidian";
 import FolderIndexPlugin from "../main";
 import {MarkdownTextRenderer} from "../types/MarkdownTextRenderer";
-
+import {CodeBlockConfig} from "../models/CodeBlockConfig";
 
 export class IndexContentProcessorModule extends MarkdownRenderChild {
+	private codeBlockContent: string;
+
 	constructor(
 		private readonly app: App,
 		private readonly plugin: FolderIndexPlugin,
 		private readonly filePath: string,
-		private readonly container: HTMLElement
+		private readonly container: HTMLElement,
+		source: string
 	) {
 		super(container)
 		this.app = app
 		this.plugin = plugin
 		this.filePath = filePath
 		this.container = container
+		this.codeBlockContent = source
 	}
 
 	async onload() {
@@ -46,9 +50,32 @@ export class IndexContentProcessorModule extends MarkdownRenderChild {
 		if (folder instanceof TFile) {
 			const files = folder.parent?.children ?? []
 			const renderer = new MarkdownTextRenderer(this.plugin, this.app)
-			await MarkdownRenderer.renderMarkdown(renderer.buildMarkdownText(files), this.container, this.filePath, this)
+			const codeBlockConfig = this.parseCodeBlockConfig(this.codeBlockContent)
+			await MarkdownRenderer.renderMarkdown(renderer.buildMarkdownText(files, codeBlockConfig), this.container, this.filePath, this)
 		}
 	}
 
+	private parseCodeBlockConfig(source: string): CodeBlockConfig {
+		const config: CodeBlockConfig = {};
+		const lines = source.split('\n');
 
+		for (const line of lines) {
+			if (line.trim().startsWith('title:')) {
+				config.title = line.split('title:')[1].trim();
+			} else if (line.trim().startsWith('type:')) {
+				config.type = line.split('type:')[1].trim();
+			} else if (line.trim().startsWith('ignore:')) {
+				const ignoreStr = line.split('ignore:')[1].trim();
+				config.ignore = ignoreStr.split(',').map(s => s.trim());
+			} else if (line.trim().startsWith('recursionLimit:')) {
+				const limitStr = line.split('recursionLimit:')[1].trim();
+				const limit = parseInt(limitStr);
+				if (!isNaN(limit)) {
+					config.recursionLimit = limit;
+				}
+			}
+		}
+
+		return config;
+	}
 }
