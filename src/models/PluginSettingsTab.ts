@@ -37,6 +37,7 @@ export interface PluginSetting {
 	headlineLimit: number;
 	indexFileUserSpecified: boolean;
 	indexFilename: string;
+	onlyOpenIndexByName: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSetting = {
@@ -61,7 +62,8 @@ export const DEFAULT_SETTINGS: PluginSetting = {
 	recursionLimit: -1,
 	headlineLimit: 6,
 	indexFileUserSpecified: false,
-	indexFilename: "!"
+	indexFilename: "!",
+	onlyOpenIndexByName: false
 }
 
 export class PluginSettingsTab extends PluginSettingTab {
@@ -353,5 +355,13 @@ export class PluginSettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings()
 				}))
 
+		new Setting(containerEl)
+			.setName("Only Open Index By Name")
+			.setDesc("This will only open index files by name")
+			.addToggle(component => component.setValue(this.plugin.settings.onlyOpenIndexByName)
+				.onChange(async (value) => {
+					this.plugin.settings.onlyOpenIndexByName = value
+					await this.plugin.saveSettings()
+				}))
 	}
 }
