@@ -18,17 +18,17 @@ export class MarkdownTextRenderer {
 
 	public buildMarkdownText(filesInFolder: TAbstractFile[]): string {
 		const fileTree = this.buildFileTree(filesInFolder);
-		return this.buildStructureMarkdownText(fileTree, 0);
+		return this.buildStructureMarkdownText(fileTree, 0, true); // Pass true for isTopLevel
 	}
 
-	private buildStructureMarkdownText(fileTree: FileTree, indentLevel: number): string {
+	private buildStructureMarkdownText(fileTree: FileTree, indentLevel: number, isTopLevel: boolean = false): string {
 		let markdownText = ""
 
 		for (const file of fileTree) {
 			if(isExcludedPath(file.path)){
 				continue
 			}
-			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
+			if (file instanceof TFolder) {
 				// Create a deep copy of the children array
 				let children = file.children;
 				const indexFile = this.checkIfFolderHasIndexFile(file.children)
@@ -39,11 +39,29 @@ export class MarkdownTextRenderer {
 				} else {
 					markdownText += this.buildMarkdownLinkString(file.name, null, indentLevel, true)
 				}
-				if (this.plugin.settings.recursionLimit === -1 || indentLevel < this.plugin.settings.recursionLimit) {
-					markdownText += this.buildStructureMarkdownText(this.buildFileTree(children), indentLevel + 1)
+				
+				// For top-level rendering, we always want to show subfolder contents
+				// For recursive rendering, we only show if recursiveIndexFiles is enabled
+				if (isTopLevel || this.plugin.settings.recursiveIndexFiles) {
+					// Check recursion limit
+					if (this.plugin.settings.recursionLimit === -1 || indentLevel < this.plugin.settings.recursionLimit) {
+						// Process non-index files in this folder
+						const sortedChildren = this.buildFileTree(children);
+						
+						for (const child of sortedChildren) {
+							if (child instanceof TFile) {
+								if (!isIndexFile(child.path)) {
+									markdownText += this.buildContentMarkdownText(child, indentLevel + 1)
+								}
+							} else if (child instanceof TFolder) {
+								// For subfolders, pass false for isTopLevel
+								markdownText += this.buildStructureMarkdownText([child], indentLevel + 1, false)
+							}
+						}
+					}
 				}
 			}
-			if (file instanceof TFile) {
+			else if (file instanceof TFile) {
 				if (isIndexFile(file.path)) {
 					continue;
 				}
@@ -188,11 +206,9 @@ export class MarkdownTextRenderer {
 	private buildFileTree(filesInFolder: TAbstractFile[]): FileTree {
 		const fileTree: FileTree = [];
 		for (const file of filesInFolder) {
-			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
-				fileTree.push(file)
-			}
-			if (file instanceof TFile) {
-				fileTree.push(file)
+			// Only add files and folders, not other abstract file types
+			if (file instanceof TFile || file instanceof TFolder) {
+				fileTree.push(file);
 			}
 		}
 		if (this.plugin.settings.sortIndexFiles === SortBy.Alphabetically) {
