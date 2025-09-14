@@ -1,5 +1,6 @@
 import {TFile} from "obsidian";
 import FolderIndexPlugin from "../main";
+import {CodeBlockConfig} from "../models/CodeBlockConfig";
 
 export function isIndexFileWithFile(file: TFile) {
 	return isIndexFile(file.path)
@@ -21,13 +22,14 @@ export function isIndexFile(path: string) {
 	return fileName == folderName || fileName == FolderIndexPlugin.PLUGIN.settings.rootIndexFile;
 }
 
-export function isExcludedPath(path: string) {
+export function isExcludedPath(path: string, codeBlockConfig?: CodeBlockConfig) {
 	// Check exact folder matches first
 	for (const excludedFolder of FolderIndexPlugin.PLUGIN.settings.excludeFolders) {
 		if (excludedFolder == "")
 			continue
-		if (RegExp(`^${excludedFolder}$`).test(path))
+		if (RegExp(`^${excludedFolder}$`).test(path)) {
 			return true;
+		}
 	}
 
 	// Then check pattern matches
@@ -36,8 +38,22 @@ export function isExcludedPath(path: string) {
 			continue
 		// Escape special characters in the pattern except * which we'll use as wildcard
 		const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*');
-		if (new RegExp(escapedPattern, 'i').test(path))
+		if (new RegExp(escapedPattern, 'i').test(path)) {
 			return true;
+		}
 	}
+
+	// Finally check code block ignore patterns if provided
+	if (codeBlockConfig?.ignore) {
+		for (const pattern of codeBlockConfig.ignore) {
+			if (pattern == "") continue;
+			// Escape special characters in the pattern except * which we'll use as wildcard
+			const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*');
+			if (new RegExp(escapedPattern, 'i').test(path)) {
+				return true;
+			}
+		}
+	}
+
 	return false
 }

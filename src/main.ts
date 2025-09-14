@@ -44,8 +44,8 @@ export default class FolderIndexPlugin extends Plugin {
 		this.registerEvent(this.app.workspace.on("layout-change", this.onLayoutChange.bind(this)))
 		this.eventManager.on("settingsUpdate", this.onSettingsUpdate.bind(this))
 
-		this.registerMarkdownCodeBlockProcessor("folder-index-content", (_source, el, ctx) => {
-			ctx.addChild(new IndexContentProcessorModule(this.app, this, ctx.sourcePath, el))
+		this.registerMarkdownCodeBlockProcessor("folder-index-content", (source, el, ctx) => {
+			ctx.addChild(new IndexContentProcessorModule(this.app, this, ctx.sourcePath, el, source))
 		})
 
 		this.folderNodeModule = new FolderNoteModule(this.app, this)
@@ -96,5 +96,3 @@ export default class FolderIndexPlugin extends Plugin {
 		this.eventManager.emit("settingsUpdate", this.settings);
 	}
 }
-
-

@@ -2,6 +2,7 @@ import {App, HeadingCache, TAbstractFile, TFile, TFolder} from "obsidian";
 import FolderIndexPlugin from "../main";
 import {isExcludedPath, isIndexFile} from "./Utilities";
 import {SortBy} from "../models/PluginSettingsTab";
+import {CodeBlockConfig} from "../models/CodeBlockConfig";
 
 type FileTree = (TFile | TFolder)[]
 type HeaderWrapper = {
@@ -16,16 +17,16 @@ export class MarkdownTextRenderer {
 		this.app = app
 	}
 
-	public buildMarkdownText(filesInFolder: TAbstractFile[]): string {
-		const fileTree = this.buildFileTree(filesInFolder);
-		return this.buildStructureMarkdownText(fileTree, 0);
+	public buildMarkdownText(filesInFolder: TAbstractFile[], codeBlockConfig?: CodeBlockConfig): string {
+		const fileTree = this.buildFileTree(filesInFolder, codeBlockConfig);
+		return this.buildStructureMarkdownText(fileTree, 0, codeBlockConfig);
 	}
 
-	private buildStructureMarkdownText(fileTree: FileTree, indentLevel: number): string {
+	private buildStructureMarkdownText(fileTree: FileTree, indentLevel: number, codeBlockConfig?: CodeBlockConfig): string {
 		let markdownText = ""
 
 		for (const file of fileTree) {
-			if(isExcludedPath(file.path)){
+			if(isExcludedPath(file.path, codeBlockConfig)){
 				continue
 			}
 			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
@@ -40,7 +41,7 @@ export class MarkdownTextRenderer {
 					markdownText += this.buildMarkdownLinkString(file.name, null, indentLevel, true)
 				}
 				if (this.plugin.settings.recursionLimit === -1 || indentLevel < this.plugin.settings.recursionLimit) {
-					markdownText += this.buildStructureMarkdownText(this.buildFileTree(children), indentLevel + 1)
+					markdownText += this.buildStructureMarkdownText(this.buildFileTree(children, codeBlockConfig), indentLevel + 1, codeBlockConfig)
 				}
 			}
 			if (file instanceof TFile) {
@@ -134,7 +135,6 @@ export class MarkdownTextRenderer {
 		return `#${encodeURI(header.header.heading)}`
 	}
 
-
 	private checkIfFolderHasIndexFile(children: TAbstractFile[]): TFile | null {
 		for (const file of children) {
 			if (file instanceof TFile) {
@@ -162,36 +162,48 @@ export class MarkdownTextRenderer {
 		return headerTree
 	}
 
-	// Gets all headers that are children of the parentHeader
 	private getHeaderChildren(headers: HeadingCache[], startIndex: number, parentHeader: HeaderWrapper) {
 		const children: HeaderWrapper[] = []
 		if (startIndex > headers.length) {
 			return children
 		}
+
 		for (let i = startIndex; i < headers.length; i++) {
-			if (headers[i].level <= parentHeader.header.level) {
-				return children
+			const header = headers[i]
+			if (header.level <= parentHeader.header.level) {
+				break;
 			}
-			if (headers[i].level == parentHeader.header.level + 1) {
-				const wrappedHeader = {
+			if (header.level === parentHeader.header.level + 1) {
+				const child: HeaderWrapper = {
+					header: header,
 					parent: parentHeader,
-					header: headers[i],
-					children: [],
-				} as HeaderWrapper
-				wrappedHeader.children = this.getHeaderChildren(headers, i + 1, wrappedHeader)
-				children.push(wrappedHeader)
+					children: []
+				}
+				child.children = this.getHeaderChildren(headers, i + 1, child)
+				children.push(child)
 			}
 		}
 		return children
 	}
 
-	private buildFileTree(filesInFolder: TAbstractFile[]): FileTree {
+	private buildFileTree(filesInFolder: TAbstractFile[], codeBlockConfig?: CodeBlockConfig): FileTree {
 		const fileTree: FileTree = [];
 		for (const file of filesInFolder) {
+			if (codeBlockConfig?.ignore && this.isPathIgnored(file.path, codeBlockConfig.ignore)) {
+				continue;
+			}
 			if (file instanceof TFolder && this.plugin.settings.recursiveIndexFiles) {
+				// 使用本地配置的递归层级限制（如果有的话），否则使用全局设置
+				const currentLimit = codeBlockConfig?.recursionLimit ?? this.plugin.settings.recursionLimit;
+				if (currentLimit !== -1 && this.getFolderDepth(file) >= currentLimit) {
+					continue;
+				}
 				fileTree.push(file)
 			}
 			if (file instanceof TFile) {
+				if (this.plugin.settings.markdownOnly && file.extension !== 'md') {
+					continue;
+				}
 				fileTree.push(file)
 			}
 		}
@@ -205,6 +217,28 @@ export class MarkdownTextRenderer {
 			fileTree.sort((a, b) => this.naturalSort(b.name, a.name))
 		}
 		return fileTree
+	}
+
+	private getFolderDepth(folder: TFolder): number {
+		let depth = 0;
+		let current = folder;
+		while (current.parent) {
+			depth++;
+			current = current.parent;
+		}
+		return depth;
+	}
+
+	private isPathIgnored(path: string, ignorePatterns: string[]): boolean {
+		for (const pattern of ignorePatterns) {
+			if (pattern === "") continue;
+			// Escape special characters in the pattern except * which we'll use as wildcard
+			const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*');
+			if (new RegExp(escapedPattern, 'i').test(path)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private naturalSort(a: string, b: string): number {
