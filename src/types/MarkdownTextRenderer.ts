@@ -56,7 +56,16 @@ export class MarkdownTextRenderer {
 
 	private buildContentMarkdownText(file: TFile, indentLevel: number, isFolder = false): string {
 		let markdownText = ""
-		markdownText += this.buildMarkdownLinkString(this.getTitleFromPath(file.path), encodeURI(file.path), indentLevel, isFolder)
+
+		// Use parent folder name as label instead of the index file's own basename ("# Index"), which is identical for every folder.
+		const displayTitle = isFolder
+			? (file.path.substring(0, file.path.lastIndexOf("/")).split("/").pop() ?? file.path)
+			: this.getTitleFromPath(file.path)
+
+		// encodeURIComponent per segment so '#' → '%23', preventing Obsidian treating '#'-starting hrefs as same-page anchors.
+		const encodedPath = file.path.split("/").map(s => encodeURIComponent(s)).join("/")
+
+		markdownText += this.buildMarkdownLinkString(displayTitle, encodedPath, indentLevel, isFolder)
 
 		const headers: HeadingCache[] | null = this.app.metadataCache.getFileCache(file)?.headings ?? []
 		if (headers && !this.plugin.settings.disableHeadlines) {
@@ -81,7 +90,8 @@ export class MarkdownTextRenderer {
 		for (const headerWrapper of headerTree) {
 			markdownText += this.buildMarkdownLinkString(
 				headerWrapper.header.heading,
-				encodeURI(file.path) + this.buildHeaderChain(headerWrapper),
+				// Use encodeURIComponent per segment (see buildContentMarkdownText)
+				file.path.split("/").map(s => encodeURIComponent(s)).join("/") + this.buildHeaderChain(headerWrapper),
 				indentLevel
 			)
 			if (headlineLevel < this.plugin.settings.headlineLimit) {
@@ -129,9 +139,10 @@ export class MarkdownTextRenderer {
 
 	private buildHeaderChain(header: HeaderWrapper): string {
 		if (header.parent) {
-			return `${this.buildHeaderChain(header.parent)}#${encodeURI(header.header.heading)}`
+			// encodeURIComponent instead of encodeURI so '#' in heading text is encoded as '%23'.
+			return `${this.buildHeaderChain(header.parent)}#${encodeURIComponent(header.header.heading)}`
 		}
-		return `#${encodeURI(header.header.heading)}`
+		return `#${encodeURIComponent(header.header.heading)}`
 	}
 
 

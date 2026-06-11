@@ -47,6 +47,34 @@ export class IndexContentProcessorModule extends MarkdownRenderChild {
 			const files = folder.parent?.children ?? []
 			const renderer = new MarkdownTextRenderer(this.plugin, this.app)
 			await MarkdownRenderer.renderMarkdown(renderer.buildMarkdownText(files), this.container, this.filePath, this)
+
+			// Decode '%23' in data-href back to '#' and replace Obsidian's click handler with openFile() to bypass its '#'-splitting link resolver.
+			const app = this.app
+			this.container.querySelectorAll<HTMLAnchorElement>("a.internal-link").forEach(a => {
+				try {
+					const dh = a.getAttribute("data-href") ?? ""
+					if (!dh.includes("%")) return
+					const decoded = decodeURIComponent(dh)
+					const file = app.vault.getAbstractFileByPath(decoded)
+						?? app.vault.getAbstractFileByPath(decoded.replace(/\.md$/, ""))
+					if (!(file instanceof TFile)) return
+					const clone = a.cloneNode(true) as HTMLAnchorElement
+					clone.setAttribute("data-href", decoded)
+					clone.setAttribute("href", decoded)
+					const targetFile = file
+					clone.addEventListener("click", e => {
+						e.preventDefault()
+						e.stopPropagation()
+						app.workspace.getLeaf(false).openFile(targetFile)
+					})
+					clone.addEventListener("mouseover", e => {
+						e.stopPropagation()
+					})
+					a.parentNode?.replaceChild(clone, a)
+				} catch {
+					// ignore errors on individual links — the rest still render
+				}
+			})
 		}
 	}
 
