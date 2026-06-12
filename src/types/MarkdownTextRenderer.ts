@@ -57,12 +57,12 @@ export class MarkdownTextRenderer {
 	private buildContentMarkdownText(file: TFile, indentLevel: number, isFolder = false): string {
 		let markdownText = ""
 
-		// Use parent folder name as label instead of the index file's own basename ("# Index"), which is identical for every folder.
+		// Use parent folder name as label instead of the index file's own basename ("# Index"), which is identical for every folder
 		const displayTitle = isFolder
 			? (file.path.substring(0, file.path.lastIndexOf("/")).split("/").pop() ?? file.path)
 			: this.getTitleFromPath(file.path)
 
-		// encodeURIComponent per segment so '#' → '%23', preventing Obsidian treating '#'-starting hrefs as same-page anchors.
+		// encodeURIComponent per segment so '#' → '%23', preventing Obsidian treating '#'-starting hrefs as same-page anchors
 		const encodedPath = file.path.split("/").map(s => encodeURIComponent(s)).join("/")
 
 		markdownText += this.buildMarkdownLinkString(displayTitle, encodedPath, indentLevel, isFolder)
@@ -139,7 +139,7 @@ export class MarkdownTextRenderer {
 
 	private buildHeaderChain(header: HeaderWrapper): string {
 		if (header.parent) {
-			// encodeURIComponent instead of encodeURI so '#' in heading text is encoded as '%23'.
+			// encodeURIComponent instead of encodeURI so '#' in heading text is encoded as '%23'
 			return `${this.buildHeaderChain(header.parent)}#${encodeURIComponent(header.header.heading)}`
 		}
 		return `#${encodeURIComponent(header.header.heading)}`

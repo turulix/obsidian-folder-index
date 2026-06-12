@@ -48,7 +48,7 @@ export class IndexContentProcessorModule extends MarkdownRenderChild {
 			const renderer = new MarkdownTextRenderer(this.plugin, this.app)
 			await MarkdownRenderer.renderMarkdown(renderer.buildMarkdownText(files), this.container, this.filePath, this)
 
-			// Decode '%23' in data-href back to '#' and replace Obsidian's click handler with openFile() to bypass its '#'-splitting link resolver.
+			// Decode '%23' in data-href back to '#' and replace Obsidian's click handler with openFile() to bypass its '#'-splitting link resolver
 			const app = this.app
 			this.container.querySelectorAll<HTMLAnchorElement>("a.internal-link").forEach(a => {
 				try {
